@@ -1,0 +1,60 @@
+#!/usr/bin/env python
+
+from sof_utils import dicom
+
+
+def print_statistics(min_val, max_val, n):
+    print("Statistics:")
+    print(f"\tN: {n}")
+    print(f"\tWidth: [{min_val[0]}, {max_val[0]}")
+    print(f"\tHeight: [{min_val[1]}, {max_val[1]}")
+    print(f"\tMin pixel value: [{min_val[2]}, {max_val[2]}")
+    print(f"\tMax pixel value: [{min_val[3]}, {max_val[3]}")
+
+
+def main():
+    import argparse
+    import csv
+    import sys
+
+    parser = argparse.ArgumentParser(description='Extract dicom meta info in csv format.')
+    parser.add_argument('dicom_path', type=str,
+                        help='Path to search for dicom files in.')
+    parser.add_argument('-r', action='store_true',
+                        help='Inlcude subdirectories')
+    parser.add_argument('-f', '--file', type=str, nargs=1,
+                        help='Write output to file instead of stdout.')
+    parser.add_argument('-p', '--progress', action='store_true',
+                        help='Shows a progressbar, only available in combination with -f.')
+    parser.add_argument('-s', '--statistics', action='store_true',
+                        help="Print minimum and maximum values for each column.")
+
+    args = parser.parse_args()
+
+    if args.file and args.progress:
+        import tqdm
+        gen = lambda x: tqdm.tqdm(x, desc="Processing DICOMS", unit=' files')
+    else:
+        gen = lambda x: x
+
+    min_val = [None, None, None, None]
+    max_val = [None, None, None, None]
+    num_rows = 0
+
+    with (sys.stdout if not args.file else open(args.file[0], 'w')) as fh:
+        writer = csv.writer(fh)
+        writer.writerow(['file', 'width', 'height', 'min', 'max'])
+        for meta in gen(dicom.list_meta(args.dicom_path, args.r)):
+            # Calculate minimum and maximum values
+            min_val = [x if not y else min(x, y) for x, y in zip(meta[1:], min_val)]
+            max_val = [x if not y else max(x, y) for x, y in zip(meta[1:], max_val)]
+            num_rows += 1
+            # Write row to file
+            writer.writerow(meta)
+
+    if args.statistics:
+        print_statistics(min_val, max_val, num_rows)
+
+
+if __name__ == '__main__':
+    main()

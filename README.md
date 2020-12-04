@@ -1,3 +1,3 @@
 # SOF-Utils
 
-Utility scripts to aid working with the DOF dataset.
+Utility scripts to aid working with the SOF dataset.
