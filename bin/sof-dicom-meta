@@ -37,7 +37,10 @@ def main():
 
     if args.file and args.progress:
         import tqdm
-        gen = lambda x: tqdm.tqdm(x, desc="Processing DICOMS", unit=' files')
+        num_files = 0
+        for _ in dicom.list_files(args.dicom_path, args.r):
+            num_files += 1
+        gen = lambda x: tqdm.tqdm(x, desc="Processing DICOMs", unit=' files', total=num_files)
     else:
         gen = lambda x: x
 
