@@ -31,6 +31,10 @@ def main():
 
     args = parser.parse_args()
 
+    if args.progress and not args.file:
+        print("Error: cannot have -p without -f.", file=sys.stderr)
+        return 1
+
     if args.file and args.progress:
         import tqdm
         gen = lambda x: tqdm.tqdm(x, desc="Processing DICOMS", unit=' files')
