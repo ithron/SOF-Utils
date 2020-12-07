@@ -1,10 +1,12 @@
+""" Collection of dicom related functions.
+"""
+
 import pathlib
 from typing import Tuple, Generator
 
 
 def read_meta(dcm_filename: str) -> Tuple[int, int, int, int]:
-    """
-    Reads the meta data from the DICOM file and returns the width, height
+    """ Reads the meta data from the DICOM file and returns the width, height
     and the minimum and maximum pixel values.
     :param dcm_filename: path to DICOM file to read meta data from
     :return: (width, height, minPixelValue, maxPixelValue)
@@ -15,8 +17,7 @@ def read_meta(dcm_filename: str) -> Tuple[int, int, int, int]:
 
 
 def list_files(dir: str, recursive: bool = False) -> Generator[pathlib.Path, None, None]:
-    """
-    List all DICOM files the the given directory, optionally recursively.
+    """ List all DICOM files the the given directory, optionally recursively.
     :param dir: Path to a directory to look for DICOM files in
     :param recursive: If true: search in subdirectories
     :return: Generator over pathlib.Path objects
