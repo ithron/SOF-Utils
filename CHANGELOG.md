@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.0.4
+
+Released on December 7, 2020
+
+### Fixed
+
+- `sof-dicom-corrupted` does not show percentage or ETA when run with `-p`
+
 ## 0.0.3
 
 Released on December 7, 2020

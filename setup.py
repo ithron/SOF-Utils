@@ -9,7 +9,7 @@ requirements = [line.strip('\n') for line in requirements]
 
 setuptools.setup(
     name="sof_utils",
-    version="0.0.3",
+    version="0.0.4",
     author="Stefan Reinhold",
     description="Small utilities to aid working with the SOF dataset",
     author_email="stefan@sreinhold.com",
