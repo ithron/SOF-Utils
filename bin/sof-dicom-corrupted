@@ -22,8 +22,15 @@ def main():
                         help='Shows a progressbar, only available in combination with -f.')
     parser.add_argument('-s', '--summary', action='store_true',
                         help="Print summary.")
+    parser.add_argument('-V', '--version', action='store_true',
+                        help="Print the version string")
 
     args = parser.parse_args()
+
+    if args.version:
+        import sof_utils
+        print(sof_utils.__version__)
+        return 0
 
     if args.progress and not args.file:
         print("Error: cannot have -p without -f.", file=sys.stderr)

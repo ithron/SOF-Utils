@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+## Added
+
+- Package version can be noe accessed at runtime using `sof_utils.__version__`
+- CLI script now have an option to show the version `-V`
+
 ## 0.0.4
 
 Released on December 7, 2020
