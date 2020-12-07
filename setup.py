@@ -1,4 +1,5 @@
 import setuptools
+import sof_utils
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -9,7 +10,7 @@ requirements = [line.strip('\n') for line in requirements]
 
 setuptools.setup(
     name="sof_utils",
-    version="0.0.4",
+    version=sof_utils.__version__,
     author="Stefan Reinhold",
     description="Small utilities to aid working with the SOF dataset",
     author_email="stefan@sreinhold.com",
