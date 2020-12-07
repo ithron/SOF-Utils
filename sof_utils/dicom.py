@@ -4,6 +4,8 @@
 import pathlib
 from typing import Tuple, Generator
 
+import numpy as np
+
 
 def read_meta(dcm_filename: str) -> Tuple[int, int, int, int]:
     """ Reads the meta data from the DICOM file and returns the width, height
@@ -67,3 +69,14 @@ def find_corrupted(dir: str, recursive: bool = False) -> Generator[Tuple[bool, s
     """
     for file in list_files(dir, recursive):
         yield is_corrupted(str(file)), file.name
+
+
+def read_image(dcm_filename: str) -> np.array:
+    """ Read the pixel data from the given DICOM file
+    :param dcm_filename: path to DICOM file to read the pixel data from
+    :return: numpy array containing the pixel data
+    """
+    from pydicom import dcmread
+
+    dcm = dcmread(dcm_filename)
+    return dcm.pixel_array
