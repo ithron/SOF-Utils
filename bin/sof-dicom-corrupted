@@ -1,0 +1,56 @@
+#!/usr/bin/env python
+
+from sof_utils import dicom
+
+
+def print_summary(n, overall):
+    print(f"{n} out of {overall} DICOM files are corrupted.")
+
+
+def main():
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(description='Find corrupted dicom files.')
+    parser.add_argument('dicom_path', type=str,
+                        help='Path to search for dicom files in.')
+    parser.add_argument('-r', action='store_true',
+                        help='Inlcude subdirectories')
+    parser.add_argument('-f', '--file', type=str, nargs=1,
+                        help='Write output to file instead of stdout.')
+    parser.add_argument('-p', '--progress', action='store_true',
+                        help='Shows a progressbar, only available in combination with -f.')
+    parser.add_argument('-s', '--summary', action='store_true',
+                        help="Print summary.")
+
+    args = parser.parse_args()
+
+    if args.progress and not args.file:
+        print("Error: cannot have -p without -f.", file=sys.stderr)
+        return 1
+
+    if args.file and args.progress:
+        from tqdm import tqdm
+        num_files = 0
+        for _ in dicom.list_files(args.dicom_path, args.r):
+            num_files += 1
+        gen = lambda x: tqdm(x, desc="Checking DICOMS", unit=' files', total=num_files)
+    else:
+        gen = lambda x: x
+
+    num_corrupted = 0
+    num_files = 0
+
+    with (sys.stdout if not args.file else open(args.file[0], 'w')) as fh:
+        for corrupted, fn in gen(dicom.find_corrupted(args.dicom_path, args.r)):
+            if corrupted:
+                fh.write(f"{fn}\n")
+                num_corrupted += 1
+            num_files += 1
+
+    if args.summary:
+        print_summary(num_corrupted, num_files)
+
+
+if __name__ == '__main__':
+    main()

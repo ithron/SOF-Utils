@@ -9,7 +9,7 @@ requirements = [line.strip('\n') for line in requirements]
 
 setuptools.setup(
     name="sof_utils",
-    version="0.0.2",
+    version="0.0.3",
     author="Stefan Reinhold",
     description="Small utilities to aid working with the SOF dataset",
     author_email="stefan@sreinhold.com",
@@ -25,6 +25,9 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
-    scripts=['bin/sof-dicom-meta'],
+    scripts=[
+        'bin/sof-dicom-meta',
+        'bin/sof-dicom-corrupted'
+    ],
     install_requires=requirements
 )

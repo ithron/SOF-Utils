@@ -39,3 +39,31 @@ def list_meta(dir: str, recursive: bool = False) -> Generator[Tuple[str, int, in
     for file in list_files(dir, recursive):
         meta = (file.name, *read_meta(str(file)))
         yield meta
+
+
+def is_corrupted(dcm_filename: str) -> bool:
+    """
+    Checks if the given DICOM file is corrupted ot not, i.e. if the data array can be read or not/
+    :param fcm_filename: path to the DICOM file to check for corruption
+    :return: True iff the data array could NOT be read
+    """
+    from pydicom import dcmread
+    import numpy as np
+    try:
+        dcm = dcmread(dcm_filename, stop_before_pixels=False)
+        # access pixel array
+        _ = dcm.pixel_array.astype(np.int16)
+        return False
+    except:
+        return True
+
+
+def find_corrupted(dir: str, recursive: bool = False) -> Generator[Tuple[bool, str], None, None]:
+    """
+    List all corrupted DICOM files inside the given directory (optionally including sub directories).
+    :param dir: Path to a directory to look for corrupted DICOM files in
+    :param recursive: If True: search in subdirectories
+    :return: Generator of (is_corrupted, filename) pairs.
+    """
+    for file in list_files(dir, recursive):
+        yield is_corrupted(str(file)), file.name
