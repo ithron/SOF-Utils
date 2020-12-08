@@ -1,11 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.0.5
 
 ## Added
 
-- Package version can be noe accessed at runtime using `sof_utils.__version__`
+- Package version can be now accessed at runtime using `sof_utils.__version__`
 - CLI script now have an option to show the version `-V`
+- Function to load pixel data from DICOM files.
 
 ## 0.0.4
 
