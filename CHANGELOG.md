@@ -4,6 +4,7 @@
 
 ## Added
 
+- Tool to export the images from the SOF_hip dataset to PNG files.
 - Function to extract ID and visit from a filename
 
 ## 0.0.5

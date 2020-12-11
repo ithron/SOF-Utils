@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+def main():
+    import argparse
+    import tensorflow_datasets as tfds
+    from sof_utils.export import export_to_png
+
+    parser = argparse.ArgumentParser(description='Exports the SOF_hip dataset as png images')
+    parser.add_argument('target_path', type=str,
+                        help='Path to place the images in.')
+    parser.add_argument('-V', '--version', action='store_true',
+                        help="Print the version string")
+    parser.add_argument('--data_dir', '-d', type=str, default=None,
+                        help='Path to the TFDS dataset.')
+    parser.add_argument('--configuration', '-c', type=str, default=None,
+                        help='Dataset configuration.')
+
+    args = parser.parse_args()
+
+    if args.version:
+        import sof_utils
+        print(sof_utils.__version__)
+        exit(0)
+
+    ds_name = 'SOF_hip' if not args.configuration else f"SOF_hip/{args.configuration}"
+    ds = tfds.load(ds_name, split='train', data_dir=args.data_dir if args.data_dir else None)
+
+    export_to_png(ds, args.target_path)
+
+
+if __name__ == '__main__':
+    main()
