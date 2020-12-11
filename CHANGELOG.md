@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+## Added
+
+- Function to extract ID and visit from a filename
+
 ## 0.0.5
 
 ## Added
