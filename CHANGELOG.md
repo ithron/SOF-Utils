@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.0.6
 
 ## Added
 
-- Tool to export the images from the SOF_hip dataset to PNG files.
+- Tool to export the images from the SOF_hip dataset to PNG or JPG files.
 - Function to extract ID and visit from a filename
 
 ## 0.0.5

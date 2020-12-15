@@ -3,7 +3,7 @@
 def main():
     import argparse
     import tensorflow_datasets as tfds
-    from sof_utils.export import export_to_png
+    from sof_utils.export import export_images
 
     parser = argparse.ArgumentParser(description='Exports the SOF_hip dataset as png images')
     parser.add_argument('target_path', type=str,
@@ -14,6 +14,14 @@ def main():
                         help='Path to the TFDS dataset.')
     parser.add_argument('--configuration', '-c', type=str, default=None,
                         help='Dataset configuration.')
+    parser.add_argument('--format', '-t', type=str, choices=['png', 'jpeg'], default='png',
+                        help="Output image format, default to png")
+    parser.add_argument('--jpeg', action='store_true',
+                        help='Export JPEGs instead of PNGs.')
+    parser.add_argument('--width', '-w', type=int, default=None,
+                        help='Target width of the exported images')
+    parser.add_argument('--height', '-g', type=int, default=None,
+                        help='Target height of the exported images')
 
     args = parser.parse_args()
 
@@ -25,7 +33,9 @@ def main():
     ds_name = 'SOF_hip' if not args.configuration else f"SOF_hip/{args.configuration}"
     ds = tfds.load(ds_name, split='train', data_dir=args.data_dir if args.data_dir else None)
 
-    export_to_png(ds, args.target_path)
+    target_size = (args.height, args.width)
+
+    export_images(ds, args.target_path, format=args.format, downsample_to=target_size)
 
 
 if __name__ == '__main__':
