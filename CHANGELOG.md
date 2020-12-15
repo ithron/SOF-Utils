@@ -1,19 +1,24 @@
 # Changelog
 
+## Unreleased
+### Added
+
+- `sof-convert-labels` tool to convert proximal femur detection labels from label-studio json format to a short csv format.
+
 ## 0.0.7
-## Added
+### Added
 
 - Image export tool
 
 ## 0.0.6
-## Added
+### Added
 
 - Tool to export the images from the SOF_hip dataset to PNG or JPG files.
 - Function to extract ID and visit from a filename
 
 ## 0.0.5
 
-## Added
+### Added
 
 - Package version can be now accessed at runtime using `sof_utils.__version__`
 - CLI script now have an option to show the version `-V`

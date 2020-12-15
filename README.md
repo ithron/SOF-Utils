@@ -67,3 +67,19 @@ optional arguments:
   --height HEIGHT, -g HEIGHT
                         Target height of the exported images
 ```
+
+### sof-convert-labels
+```text
+usage: sof-convert-labels [-h] [-V] [-f FILE] input_label_file
+
+Convert proximal femur bounding box annotations from label-studio to csv
+format
+
+positional arguments:
+  input_label_file      Path to input label json file.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -V, --version         Print the version string
+  -f FILE, --file FILE  Write output to file instead to stdout
+```

@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+
+def main():
+    import argparse
+    import sys
+    from csv import DictWriter
+    from sof_utils import misc
+
+    parser = argparse.ArgumentParser(
+        description='Convert proximal femur bounding box annotations from label-studio to csv format')
+    parser.add_argument('input_label_file', type=str,
+                        help='Path to input label json file.')
+    parser.add_argument('-V', '--version', action='store_true',
+                        help="Print the version string")
+    parser.add_argument('-f', '--file', type=str, default=None,
+                        help='Write output to file instead to stdout')
+
+    args = parser.parse_args()
+
+    if args.version:
+        import sof_utils
+        print(sof_utils.__version__)
+        exit(0)
+
+    labels = misc.read_label_file(args.input_label_file)
+    with (open(args.file, 'w') if args.file else sys.stdout) as fh:
+        writer = DictWriter(fh, [name for name in labels[0].keys()])
+        writer.writeheader()
+        writer.writerows(labels)
+
+
+if __name__ == '__main__':
+    main()
