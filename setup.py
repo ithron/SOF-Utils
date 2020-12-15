@@ -28,7 +28,8 @@ setuptools.setup(
     python_requires='>=3.6',
     scripts=[
         'bin/sof-dicom-meta',
-        'bin/sof-dicom-corrupted'
+        'bin/sof-dicom-corrupted',
+        'bin/sof-export-images'
     ],
     install_requires=requirements
 )

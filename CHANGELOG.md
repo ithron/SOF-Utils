@@ -1,7 +1,11 @@
 # Changelog
 
-## 0.0.6
+## 0.0.7
+## Added
 
+- Image export tool
+
+## 0.0.6
 ## Added
 
 - Tool to export the images from the SOF_hip dataset to PNG or JPG files.
