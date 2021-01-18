@@ -4,6 +4,7 @@ def main():
     import argparse
     import tensorflow_datasets as tfds
     from sof_utils.export import export_images
+    import sys
 
     parser = argparse.ArgumentParser(description='Exports the SOF_hip dataset as png images')
     parser.add_argument('target_path', type=str,
@@ -20,6 +21,15 @@ def main():
                         help='Target width of the exported images')
     parser.add_argument('--height', '-g', type=int, default=None,
                         help='Target height of the exported images')
+    parser.add_argument('--split_lr', '-s', action='store_true',
+                        help='Split radiographs vertically into a left and a right half. The exported files will get '
+                             'a "L" or "R" postfix, depending on the side of the hip that is shown. Note that the '
+                             'left hip is usually shown on the right hand side of the radiograph. If the (possibly '
+                             'downscaled) image does not have an even width, it is padded with one additional volumn '
+                             'to the right.')
+    parser.add_argument('--flip_lr', '-p', action='store_true',
+                        help='Flips the images of the left hip so that they look like a right hip. Can only be used '
+                             'in combination with --flip_lr')
 
     args = parser.parse_args()
 
@@ -28,12 +38,18 @@ def main():
         print(sof_utils.__version__)
         exit(0)
 
+    if args.flip_lr and not args.split_lr:
+        print("Error: --flip_lr can only be used in combination with --split_lr.\n", file=sys.stderr)
+        parser.print_usage()
+        exit(1)
+
     ds_name = 'SOF_hip' if not args.configuration else f"SOF_hip/{args.configuration}"
     ds = tfds.load(ds_name, split='train', data_dir=args.data_dir if args.data_dir else None)
 
     target_size = (args.height, args.width)
 
-    export_images(ds, args.target_path, format=args.format, downsample_to=target_size)
+    export_images(ds, args.target_path, format=args.format, downsample_to=target_size, split_lr=args.split_lr,
+                  flip_lr=args.flip_lr)
 
 
 if __name__ == '__main__':
