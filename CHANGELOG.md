@@ -8,7 +8,7 @@
 
 ### Removed
 
-- Deprecated and disfunctional `--jpeg` option for the `sof-export-images` tool
+- Deprecated and dysfunctional `--jpeg` option for the `sof-export-images` tool
 
 ## 0.0.7
 ### Added
