@@ -44,7 +44,7 @@ optional arguments:
 ```text
 usage: sof-export-images [-h] [-V] [--data_dir DATA_DIR]
                          [--configuration CONFIGURATION] [--format {png,jpeg}]
-                         [--jpeg] [--width WIDTH] [--height HEIGHT]
+                         [--width WIDTH] [--height HEIGHT]
                          target_path
 
 Exports the SOF_hip dataset as png images
@@ -61,7 +61,6 @@ optional arguments:
                         Dataset configuration.
   --format {png,jpeg}, -t {png,jpeg}
                         Output image format, default to png
-  --jpeg                Export JPEGs instead of PNGs.
   --width WIDTH, -w WIDTH
                         Target width of the exported images
   --height HEIGHT, -g HEIGHT
