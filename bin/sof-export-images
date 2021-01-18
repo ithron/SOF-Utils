@@ -16,8 +16,6 @@ def main():
                         help='Dataset configuration.')
     parser.add_argument('--format', '-t', type=str, choices=['png', 'jpeg'], default='png',
                         help="Output image format, default to png")
-    parser.add_argument('--jpeg', action='store_true',
-                        help='Export JPEGs instead of PNGs.')
     parser.add_argument('--width', '-w', type=int, default=None,
                         help='Target width of the exported images')
     parser.add_argument('--height', '-g', type=int, default=None,
