@@ -44,7 +44,8 @@ optional arguments:
 ```text
 usage: sof-export-images [-h] [-V] [--data_dir DATA_DIR]
                          [--configuration CONFIGURATION] [--format {png,jpeg}]
-                         [--width WIDTH] [--height HEIGHT]
+                         [--width WIDTH] [--height HEIGHT] [--split_lr]
+                         [--flip_lr]
                          target_path
 
 Exports the SOF_hip dataset as png images
@@ -65,6 +66,16 @@ optional arguments:
                         Target width of the exported images
   --height HEIGHT, -g HEIGHT
                         Target height of the exported images
+  --split_lr, -s        Split radiographs vertically into a left and a right
+                        half. The exported files will get a "L" or "R"
+                        postfix, depending on the side of the hip that is
+                        shown. Note that the left hip is usually shown on the
+                        right hand side of the radiograph. If the (possibly
+                        downscaled) image does not have an even width, it is
+                        padded with one additional volumn to the right.
+  --flip_lr, -p         Flips the images of the left hip so that they look
+                        like a right hip. Can only be used in combination with
+                        --flip_lr
 ```
 
 ### sof-convert-labels
