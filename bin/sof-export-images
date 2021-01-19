@@ -1,5 +1,23 @@
 #!/usr/bin/env python
 
+from typing import Union, Set
+
+
+def ids_from_file(filename: Union[None, str]) -> Set[int]:
+    """ Reads IDs from a file line by line and return them as a set of integers.
+    :param filename: Path to file containing IDs
+    :return: set of integer IDs
+    """
+    listed_ids = set()
+    if not filename:
+        return listed_ids
+
+    with open(filename, 'r') as f:
+        for sof_id in f.read().split():
+            listed_ids.add(int(sof_id))
+    return listed_ids
+
+
 def main():
     import argparse
     import tensorflow_datasets as tfds
@@ -33,6 +51,10 @@ def main():
     parser.add_argument('--visits', '-v', type=str, default=None,
                         help='Comma separated list of visits to export. If this option is omitted, all visits are '
                              'exported.')
+    parser.add_argument('--include', type=str, default=None,
+                        help='Only include the IDs listed in given file. The IDs should be listed one ID per line.')
+    parser.add_argument('--exclude', type=str, default=None,
+                        help='Exclude the IDs listed in given file. The IDs should be listed one ID per line.')
 
     args = parser.parse_args()
 
@@ -54,8 +76,12 @@ def main():
 
     target_size = (args.height, args.width)
 
+    included_ids = ids_from_file(args.include)
+    excluded_ids = ids_from_file(args.exclude)
+
     export_images(ds, args.target_path, format=args.format, downsample_to=target_size, split_lr=args.split_lr,
-                  flip_lr=args.flip_lr, visits=visits)
+                  flip_lr=args.flip_lr, visits=visits,
+                  included_ids=included_ids, excluded_ids=excluded_ids)
 
 
 if __name__ == '__main__':
