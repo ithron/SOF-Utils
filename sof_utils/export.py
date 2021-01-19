@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple, Union, List
 
 import tensorflow as tf
 
@@ -8,7 +8,8 @@ def export_images(dataset: tf.data.Dataset,
                   format: str = 'png',
                   downsample_to: Tuple[Union[int, None], Union[int, None]] = (1, None),
                   split_lr: bool = False,
-                  flip_lr: bool = False):
+                  flip_lr: bool = False,
+                  visits: List[int] = []):
     """ Export the given dataset to png images
     :param dataset: Dataset to export
     :param target_path: path where the images will be exported to.
@@ -48,6 +49,9 @@ def export_images(dataset: tf.data.Dataset,
         downsample_to = (downsample_to[0], int(ceil(ratio * float(image_shape[1]))))
 
     for example in tqdm(dataset):
+        if visits and example['visit'] not in visits:
+            continue
+
         image = tf.cast(tf.image.resize(example['image'], (downsample_to[1], downsample_to[0])), dtype=tf.uint8)
 
         if split_lr:
