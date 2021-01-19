@@ -1,4 +1,4 @@
-from typing import Tuple, Union, List, Set
+from typing import Tuple, Union, List, Set, Dict
 
 import tensorflow as tf
 
@@ -11,7 +11,10 @@ def export_images(dataset: tf.data.Dataset,
                   flip_lr: bool = False,
                   visits: List[int] = [],
                   included_ids: Set[int] = set(),
-                  excluded_ids: Set[int] = set()):
+                  excluded_ids: Set[int] = set(),
+                  num_groups: Union[None, int] = None,
+                  max_group_size: Union[None, int] = None,
+                  randomized_groups: bool = False):
     """ Export the given dataset to png images
     :param dataset: Dataset to export
     :param target_path: path where the images will be exported to.
@@ -26,10 +29,25 @@ def export_images(dataset: tf.data.Dataset,
     :visits: list of visits to include in the export. If visits is empty all visits are exported.
     :included_ids: set of SOF IDs to include. If empty, all IDs are exported.
     :excluded_ids: set of SOF IDs that should be excluded from the export.
+    :num_groups: number of groups the exported files should be split into. If both, `max_group_size` and `num_groups` are `None` no grouping will be performed.
+    :max_group_size: maximum number of files per group. If both, `max_group_size` and `num_groups` are `None` no grouping will be performed.
+    :randomized_groups: If true, file to group assignments will be random.
     """
     from pathlib import Path
     from tqdm import tqdm
     from math import ceil
+
+    groups = {}
+    group_sizes = []
+    if num_groups or max_group_size:
+        groups, group_sizes = _group_items(dataset,
+                                           num_groups=num_groups,
+                                           max_group_size=max_group_size,
+                                           randomized=randomized_groups,
+                                           split_lr=split_lr,
+                                           visits=visits,
+                                           included_ids=included_ids,
+                                           excluded_ids=excluded_ids)
 
     target_path = Path(target_path)
     target_path.mkdir(parents=True, exist_ok=True)
@@ -53,6 +71,14 @@ def export_images(dataset: tf.data.Dataset,
         ratio = float(downsample_to[0]) / float(image_shape[1])
         downsample_to = (downsample_to[0], int(ceil(ratio * float(image_shape[1]))))
 
+    def group_prefix(sof_id, visit, lr):
+        if not groups:
+            return ''
+        group = groups[(sof_id, visit, lr)]
+        group_size = group_sizes[group]
+
+        return f"G{group:04d}-N{group_size}-"
+
     for example in tqdm(dataset):
         sof_id = example['id'].numpy()
         visit = example['visit'].numpy()
@@ -67,17 +93,20 @@ def export_images(dataset: tf.data.Dataset,
             left_img, right_img = split_image_lr(image, flip_lr)
             postfix = f"-{left_img.shape[1]}x{left_img.shape[0]}"
             # write left image, ie.e right hip
-            filename = target_path.joinpath(f'{sof_id}V{visit}R{postfix}.png')
+            pref = group_prefix(sof_id, visit, 'R')
+            filename = target_path.joinpath(f'{pref}{sof_id}V{visit}R{postfix}.png')
             encoded_image = encoding_func(left_img)
             tf.io.write_file(str(filename), encoded_image)
 
             # write right image, i.e. left hip
-            filename = target_path.joinpath(f'{sof_id}V{visit}L{postfix}.png')
+            pref = group_prefix(sof_id, visit, 'L')
+            filename = target_path.joinpath(f'{pref}{sof_id}V{visit}L{postfix}.png')
             encoded_image = encoding_func(left_img)
             tf.io.write_file(str(filename), encoded_image)
         else:
             postfix = f"-{image.shape[1]}x{image.shape[0]}"
-            filename = target_path.joinpath(f'{sof_id}V{visit}{postfix}.png')
+            pref = group_prefix(sof_id, visit, '')
+            filename = target_path.joinpath(f'{pref}{sof_id}V{visit}{postfix}.png')
             encoded_image = encoding_func(image)
             tf.io.write_file(str(filename), encoded_image)
 
@@ -101,3 +130,67 @@ def split_image_lr(image: tf.Tensor, flip_lr: bool = False) -> Tuple[tf.Tensor, 
         right_image = tf.image.flip_left_right(right_image)
 
     return left_image, right_image
+
+
+def _group_items(dataset: tf.data.Dataset,
+                 max_group_size: Union[None, int],
+                 num_groups: Union[None, int],
+                 randomized: bool,
+                 split_lr: bool,
+                 visits: List[int],
+                 included_ids: Set[int],
+                 excluded_ids: Set[int]) -> Tuple[Dict[Tuple[int, int, str], int], List[int]]:
+    """ Assigns each to be exported items to a group
+    :param dataset: Dataset
+    :param max_group_size: Maximum group size, only when num_groups is not given
+    :param num_groups: Maximum number of groups, only when max_group_size is not given
+    :param randomized: If true, assigment will be random
+    :param split_lr: Tf example images should be split in left and right images
+    :param visits: visits to include, if empty all visits are included
+    :param included_ids: list of SOF IDs to include, if empty all IDs will be included
+    :param excluded_ids: list of SOF IDs eo exclude
+    :return: (group_dict, group_size) tuple containing a group dictionary and a list of group sizes..
+    """
+    from tqdm import tqdm
+    from math import ceil
+    from random import sample
+
+    splits = ['L', 'R'] if split_lr else ['']
+
+    # Generate item keys
+    keys = []
+    for example in tqdm(dataset, desc='Scanning dataset', unit='example'):
+        sof_id = example['id'].numpy()
+        visit = example['visit'].numpy()
+
+        if included_ids and sof_id not in included_ids or sof_id in excluded_ids:
+            continue
+        if visits and visit not in visits:
+            continue
+
+        for split in splits:
+            key = (sof_id, visit, split)
+            keys.append(key)
+
+    if (not num_groups and not max_group_size) or (num_groups and max_group_size):
+        raise ValueError("Must set either num_groups or max_group_size")
+
+    # group items
+    num_items = len(keys)
+    num_groups = num_groups if num_groups else int(ceil(num_items / max_group_size))
+    max_group_size = max_group_size if max_group_size else int(ceil(num_items / num_groups))
+
+    group_sizes = [0 for i in range(num_groups)]
+
+    group_dict = {}
+    for key in keys:
+        available_groups = [i for i in range(num_groups) if group_sizes[i] < max_group_size]
+
+        assert available_groups
+
+        group = sample(available_groups, 1)[0] if randomized else available_groups[0]
+
+        group_sizes[group] += 1
+        group_dict[key] = group
+
+    return group_dict, group_sizes
