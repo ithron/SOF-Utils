@@ -1,4 +1,4 @@
-from typing import Tuple, Union, List
+from typing import Tuple, Union, List, Set
 
 import tensorflow as tf
 
@@ -9,7 +9,9 @@ def export_images(dataset: tf.data.Dataset,
                   downsample_to: Tuple[Union[int, None], Union[int, None]] = (1, None),
                   split_lr: bool = False,
                   flip_lr: bool = False,
-                  visits: List[int] = []):
+                  visits: List[int] = [],
+                  included_ids: Set[int] = set(),
+                  excluded_ids: Set[int] = set()):
     """ Export the given dataset to png images
     :param dataset: Dataset to export
     :param target_path: path where the images will be exported to.
@@ -21,6 +23,9 @@ def export_images(dataset: tf.data.Dataset,
         one image files are written per example.
     :flip_lr: if true (default is false), flips the right part of the image vertically. Does nothing if
         'split_lr == False'.
+    :visits: list of visits to include in the export. If visits is empty all visits are exported.
+    :included_ids: set of SOF IDs to include. If empty, all IDs are exported.
+    :excluded_ids: set of SOF IDs that should be excluded from the export.
     """
     from pathlib import Path
     from tqdm import tqdm
@@ -49,7 +54,11 @@ def export_images(dataset: tf.data.Dataset,
         downsample_to = (downsample_to[0], int(ceil(ratio * float(image_shape[1]))))
 
     for example in tqdm(dataset):
-        if visits and example['visit'] not in visits:
+        sof_id = example['id'].numpy()
+        visit = example['visit'].numpy()
+        if visits and visit not in visits:
+            continue
+        if included_ids and sof_id not in included_ids or sof_id in excluded_ids:
             continue
 
         image = tf.cast(tf.image.resize(example['image'], (downsample_to[1], downsample_to[0])), dtype=tf.uint8)
@@ -58,17 +67,17 @@ def export_images(dataset: tf.data.Dataset,
             left_img, right_img = split_image_lr(image, flip_lr)
             postfix = f"-{left_img.shape[1]}x{left_img.shape[0]}"
             # write left image, ie.e right hip
-            filename = target_path.joinpath(f'{example["id"]}V{example["visit"]}R{postfix}.png')
+            filename = target_path.joinpath(f'{sof_id}V{visit}R{postfix}.png')
             encoded_image = encoding_func(left_img)
             tf.io.write_file(str(filename), encoded_image)
 
             # write right image, i.e. left hip
-            filename = target_path.joinpath(f'{example["id"]}V{example["visit"]}L{postfix}.png')
+            filename = target_path.joinpath(f'{sof_id}V{visit}L{postfix}.png')
             encoded_image = encoding_func(left_img)
             tf.io.write_file(str(filename), encoded_image)
         else:
             postfix = f"-{image.shape[1]}x{image.shape[0]}"
-            filename = target_path.joinpath(f'{example["id"]}V{example["visit"]}{postfix}.png')
+            filename = target_path.joinpath(f'{sof_id}V{visit}{postfix}.png')
             encoded_image = encoding_func(image)
             tf.io.write_file(str(filename), encoded_image)
 

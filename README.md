@@ -45,7 +45,8 @@ optional arguments:
 usage: sof-export-images [-h] [-V] [--data_dir DATA_DIR]
                          [--configuration CONFIGURATION] [--format {png,jpeg}]
                          [--width WIDTH] [--height HEIGHT] [--split_lr]
-                         [--flip_lr] [--visits VISITS]
+                         [--flip_lr] [--visits VISITS] [--include INCLUDE]
+                         [--exclude EXCLUDE]
                          target_path
 
 Exports the SOF_hip dataset as png images
@@ -79,6 +80,10 @@ optional arguments:
   --visits VISITS, -v VISITS
                         Comma separated list of visits to export. If this
                         option is omitted, all visits are exported.
+  --include INCLUDE     Only include the IDs listed in given file. The IDs
+                        should be listed one ID per line.
+  --exclude EXCLUDE     Exclude the IDs listed in given file. The IDs should
+                        be listed one ID per line.
 ```
 
 ### sof-convert-labels
