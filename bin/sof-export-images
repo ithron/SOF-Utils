@@ -64,6 +64,10 @@ def main():
     parser.add_argument('--randomized-groups', action='store_true',
                         help='If grouping is used (either with --max-group-size or with --num-groups), the assignment '
                              'of files to groups will be randomized.')
+    parser.add_argument('--zip', '-z', action='store_true',
+                        help='Write exported images to a zip file instead of into a directory. If grouping is '
+                             'enabled, one zip file per group will be created. Without grouping \'target_path\' '
+                             'should be a path a the target zip file not to an directoty.')
 
     args = parser.parse_args()
 
@@ -97,7 +101,8 @@ def main():
                   included_ids=included_ids, excluded_ids=excluded_ids,
                   num_groups=args.num_groups,
                   max_group_size=args.max_group_size,
-                  randomized_groups=args.randomized_groups)
+                  randomized_groups=args.randomized_groups,
+                  zip=args.zip)
 
 
 if __name__ == '__main__':
