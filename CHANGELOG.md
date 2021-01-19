@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.0.8
+## 0.0.9
 ### Added
 
 - `sof-convert-labels` tool to convert proximal femur detection labels from label-studio json format to a short csv format.
