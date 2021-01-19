@@ -46,7 +46,8 @@ usage: sof-export-images [-h] [-V] [--data_dir DATA_DIR]
                          [--configuration CONFIGURATION] [--format {png,jpeg}]
                          [--width WIDTH] [--height HEIGHT] [--split_lr]
                          [--flip_lr] [--visits VISITS] [--include INCLUDE]
-                         [--exclude EXCLUDE]
+                         [--exclude EXCLUDE] [--max-group-size MAX_GROUP_SIZE]
+                         [--num-groups NUM_GROUPS] [--randomized-groups]
                          target_path
 
 Exports the SOF_hip dataset as png images
@@ -84,6 +85,17 @@ optional arguments:
                         should be listed one ID per line.
   --exclude EXCLUDE     Exclude the IDs listed in given file. The IDs should
                         be listed one ID per line.
+  --max-group-size MAX_GROUP_SIZE
+                        Splits the exported images into groups. The groups
+                        will contain at most the specific number of files.
+                        Cannot be used together width --num-groups
+  --num-groups NUM_GROUPS
+                        Splits the exported images into the specified number
+                        of groups. Cannot be used together with --max-group-
+                        size.
+  --randomized-groups   If grouping is used (either with --max-group-size or
+                        with --num-groups), the assignment of files to groups
+                        will be randomized.
 ```
 
 ### sof-convert-labels
