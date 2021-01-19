@@ -5,6 +5,7 @@
 
 - `sof-convert-labels` tool to convert proximal femur detection labels from label-studio json format to a short csv format.
 - Options for `sof-export-images` tool to split images into left and right half.
+- Option for `sof-export-images` to only export selected visits.
 
 ### Removed
 
@@ -19,7 +20,7 @@
 ### Added
 
 - Tool to export the images from the SOF_hip dataset to PNG or JPG files.
-- Function to extract ID and visit from a filename
+- Function to extract ID and visit from a filename 
 
 ## 0.0.5
 
