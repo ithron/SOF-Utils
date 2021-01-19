@@ -7,6 +7,7 @@
 - Options for `sof-export-images` tool to split images into left and right half.
 - Option for `sof-export-images` to only export selected visits.
 - Option for `sof-export-images` to include or exclude SOF IDs listed in files.
+- Options to group the exported images (`--num-groups`, `--max-group-size` and `--randomized-groups`).
 
 ### Removed
 
