@@ -45,7 +45,7 @@ optional arguments:
 usage: sof-export-images [-h] [-V] [--data_dir DATA_DIR]
                          [--configuration CONFIGURATION] [--format {png,jpeg}]
                          [--width WIDTH] [--height HEIGHT] [--split_lr]
-                         [--flip_lr]
+                         [--flip_lr] [--visits VISITS]
                          target_path
 
 Exports the SOF_hip dataset as png images
@@ -76,6 +76,9 @@ optional arguments:
   --flip_lr, -p         Flips the images of the left hip so that they look
                         like a right hip. Can only be used in combination with
                         --flip_lr
+  --visits VISITS, -v VISITS
+                        Comma separated list of visits to export. If this
+                        option is omitted, all visits are exported.
 ```
 
 ### sof-convert-labels
