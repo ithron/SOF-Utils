@@ -8,6 +8,7 @@
 - Option for `sof-export-images` to only export selected visits.
 - Option for `sof-export-images` to include or exclude SOF IDs listed in files.
 - Options to group the exported images (`--num-groups`, `--max-group-size` and `--randomized-groups`).
+- Option `--zip` for `sof-export-images` to write expoted image directly to (a) zip archive(s).
 
 ### Removed
 

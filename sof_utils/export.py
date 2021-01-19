@@ -14,7 +14,8 @@ def export_images(dataset: tf.data.Dataset,
                   excluded_ids: Set[int] = set(),
                   num_groups: Union[None, int] = None,
                   max_group_size: Union[None, int] = None,
-                  randomized_groups: bool = False):
+                  randomized_groups: bool = False,
+                  zip: bool = False):
     """ Export the given dataset to png images
     :param dataset: Dataset to export
     :param target_path: path where the images will be exported to.
@@ -32,10 +33,12 @@ def export_images(dataset: tf.data.Dataset,
     :num_groups: number of groups the exported files should be split into. If both, `max_group_size` and `num_groups` are `None` no grouping will be performed.
     :max_group_size: maximum number of files per group. If both, `max_group_size` and `num_groups` are `None` no grouping will be performed.
     :randomized_groups: If true, file to group assignments will be random.
+    :zip: If true, write files into a zip file instead of a directory. If grouping is enabled, create one zip file per group.
     """
     from pathlib import Path
     from tqdm import tqdm
     from math import ceil
+    from zipfile import ZipFile
 
     groups = {}
     group_sizes = []
@@ -50,7 +53,10 @@ def export_images(dataset: tf.data.Dataset,
                                            excluded_ids=excluded_ids)
 
     target_path = Path(target_path)
-    target_path.mkdir(parents=True, exist_ok=True)
+    if zip and not groups:
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+    else:
+        target_path.mkdir(parents=True, exist_ok=True)
 
     if format.lower() == 'png':
         encoding_func = lambda x: tf.io.encode_png(x)
@@ -79,6 +85,22 @@ def export_images(dataset: tf.data.Dataset,
 
         return f"G{group:04d}-N{group_size}-"
 
+    if zip and not groups:
+        zip_file = ZipFile(target_path, 'w')
+    else:
+        zip_files = [ZipFile(target_path.joinpath(f"{group:04d}-N{group_sizes[group]}.zip"), 'w') for group in
+                     range(len(group_sizes))]
+
+    def write_file(filename, bytes, group=None):
+        if not zip:
+            with open(str(filename), 'wb') as f:
+                f.write(bytes)
+        if not groups:
+            zip_file.writestr(filename.name, bytes)
+        else:
+            zf = zip_files[group]
+            zf.writestr(filename.name, bytes)
+
     for example in tqdm(dataset):
         sof_id = example['id'].numpy()
         visit = example['visit'].numpy()
@@ -93,22 +115,28 @@ def export_images(dataset: tf.data.Dataset,
             left_img, right_img = split_image_lr(image, flip_lr)
             postfix = f"-{left_img.shape[1]}x{left_img.shape[0]}"
             # write left image, ie.e right hip
-            pref = group_prefix(sof_id, visit, 'R')
+            key = (sof_id, visit, 'R')
+            group = groups[key] if groups else None
+            pref = group_prefix(*key)
             filename = target_path.joinpath(f'{pref}{sof_id}V{visit}R{postfix}.png')
             encoded_image = encoding_func(left_img)
-            tf.io.write_file(str(filename), encoded_image)
+            write_file(filename, encoded_image.numpy(), group)
 
             # write right image, i.e. left hip
-            pref = group_prefix(sof_id, visit, 'L')
+            key = (sof_id, visit, 'L')
+            group = groups[key] if groups else None
+            pref = group_prefix(*key)
             filename = target_path.joinpath(f'{pref}{sof_id}V{visit}L{postfix}.png')
-            encoded_image = encoding_func(left_img)
-            tf.io.write_file(str(filename), encoded_image)
+            encoded_image = encoding_func(right_img)
+            write_file(filename, encoded_image.numpy(), group)
         else:
             postfix = f"-{image.shape[1]}x{image.shape[0]}"
-            pref = group_prefix(sof_id, visit, '')
+            key = (sof_id, visit, '')
+            group = groups[key] if groups else None
+            pref = group_prefix(*key)
             filename = target_path.joinpath(f'{pref}{sof_id}V{visit}{postfix}.png')
             encoded_image = encoding_func(image)
-            tf.io.write_file(str(filename), encoded_image)
+            write_file(filename, encoded_image.numpy(), group)
 
 
 def split_image_lr(image: tf.Tensor, flip_lr: bool = False) -> Tuple[tf.Tensor, tf.Tensor]:

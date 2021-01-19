@@ -48,6 +48,7 @@ usage: sof-export-images [-h] [-V] [--data_dir DATA_DIR]
                          [--flip_lr] [--visits VISITS] [--include INCLUDE]
                          [--exclude EXCLUDE] [--max-group-size MAX_GROUP_SIZE]
                          [--num-groups NUM_GROUPS] [--randomized-groups]
+                         [--zip]
                          target_path
 
 Exports the SOF_hip dataset as png images
@@ -96,6 +97,11 @@ optional arguments:
   --randomized-groups   If grouping is used (either with --max-group-size or
                         with --num-groups), the assignment of files to groups
                         will be randomized.
+  --zip, -z             Write exported images to a zip file instead of into a
+                        directory. If grouping is enabled, one zip file per
+                        group will be created. Without grouping 'target_path'
+                        should be a path a the target zip file not to an
+                        directoty.
 ```
 
 ### sof-convert-labels
