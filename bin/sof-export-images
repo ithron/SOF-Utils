@@ -30,6 +30,9 @@ def main():
     parser.add_argument('--flip_lr', '-p', action='store_true',
                         help='Flips the images of the left hip so that they look like a right hip. Can only be used '
                              'in combination with --flip_lr')
+    parser.add_argument('--visits', '-v', type=str, default=None,
+                        help='Comma separated list of visits to export. If this option is omitted, all visits are '
+                             'exported.')
 
     args = parser.parse_args()
 
@@ -43,13 +46,16 @@ def main():
         parser.print_usage()
         exit(1)
 
+    # Split selected visits of given
+    visits = [int(visit) for visit in args.visits.split(',') if visit] if args.visits else []
+
     ds_name = 'SOF_hip' if not args.configuration else f"SOF_hip/{args.configuration}"
     ds = tfds.load(ds_name, split='train', data_dir=args.data_dir if args.data_dir else None)
 
     target_size = (args.height, args.width)
 
     export_images(ds, args.target_path, format=args.format, downsample_to=target_size, split_lr=args.split_lr,
-                  flip_lr=args.flip_lr)
+                  flip_lr=args.flip_lr, visits=visits)
 
 
 if __name__ == '__main__':
