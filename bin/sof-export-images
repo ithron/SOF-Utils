@@ -55,6 +55,15 @@ def main():
                         help='Only include the IDs listed in given file. The IDs should be listed one ID per line.')
     parser.add_argument('--exclude', type=str, default=None,
                         help='Exclude the IDs listed in given file. The IDs should be listed one ID per line.')
+    parser.add_argument('--max-group-size', type=int, default=None,
+                        help='Splits the exported images into groups. The groups will contain at most the specific '
+                             'number of files. Cannot be used together width --num-groups')
+    parser.add_argument('--num-groups', type=int, default=None,
+                        help='Splits the exported images into the specified number of groups. Cannot be used together '
+                             'with --max-group-size.')
+    parser.add_argument('--randomized-groups', action='store_true',
+                        help='If grouping is used (either with --max-group-size or with --num-groups), the assignment '
+                             'of files to groups will be randomized.')
 
     args = parser.parse_args()
 
@@ -66,6 +75,10 @@ def main():
     if args.flip_lr and not args.split_lr:
         print("Error: --flip_lr can only be used in combination with --split_lr.\n", file=sys.stderr)
         parser.print_usage()
+        exit(1)
+
+    if args.num_groups and args.max_group_size:
+        print("Error: specifying both --max-group-size and --num-groups is not allowed!", file=sys.stderr)
         exit(1)
 
     # Split selected visits of given
@@ -81,7 +94,10 @@ def main():
 
     export_images(ds, args.target_path, format=args.format, downsample_to=target_size, split_lr=args.split_lr,
                   flip_lr=args.flip_lr, visits=visits,
-                  included_ids=included_ids, excluded_ids=excluded_ids)
+                  included_ids=included_ids, excluded_ids=excluded_ids,
+                  num_groups=args.num_groups,
+                  max_group_size=args.max_group_size,
+                  randomized_groups=args.randomized_groups)
 
 
 if __name__ == '__main__':
