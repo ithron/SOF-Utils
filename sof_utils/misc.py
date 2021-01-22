@@ -72,7 +72,7 @@ def read_label_file(filename: str) -> List[Dict]:
                 'left_right': lr,
                 'upside_down': upside_down,
                 'incomplete': incomplete,
-                'implant': incomplete,
+                'implant': implant,
                 'width': width,
                 'height': height
             }
