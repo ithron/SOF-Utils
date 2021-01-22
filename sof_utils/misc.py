@@ -26,46 +26,70 @@ def read_label_file(filename: str) -> List[Dict]:
     """
     import json
     import re
+    from pathlib import Path
+    from zipfile import ZipFile
 
     labels = []
-    with open(filename, 'r')as fh:
+
+    label_path = Path(filename)
+
+    open_file = lambda: open(filename, 'r')
+
+    if label_path.suffix == '.zip':
+        zip_file = ZipFile(label_path, 'r')
+        open_file = zip_file.open('result.json', 'r')
+
+    with open_file as fh:
         for item in json.load(fh):
-            image_id = re.match('.*/[a-zA-Z0-9]+-([0-9]+V[0-9])\.png', item['data']['image']).groups()[0]
+            matches = re.match('^.*[/-]([0-9]+)V([0-9])+(L|R)-([0-9]+)x([0-9]+)\.png$', item['image']).groups()
+            if not matches or len(matches) != 5:
+                raise ValueError(f"Annotated image '{item['image']}' has wrong format!")
+
+            image_id = int(matches[0])
+            visit = int(matches[1])
+            lr = matches[2]
+            width = int(matches[3])
+            height = int(matches[4])
+
+            if "labels" in item:
+                image_labels = item['labels'] if isinstance(item['labels'], List) else [item['labels']]
+            else:
+                image_labels = []
+            incomplete = 1 if "Incomplete" in image_labels else 0
+            implant = 1 if "Implant" in image_labels else 0
+            upside_down = 1 if "UpsideDown" in image_labels else 0
+
+            invalid_keypoints = (incomplete + implant) > 0
+
+            if not invalid_keypoints and ("keypoints" not in item or len(item['keypoints']) != 12):
+                raise ValueError(f"Not enough keypoints in label for {image_id}V{visit}{lr}")
+
             entry = {
                 'id': image_id,
-                'flipped': 0,
-                'left_incomplete': 0,
-                'left_incomplete_shaft': 0,
-                'left_implant': 0,
-                'right_incomplete': 0,
-                'right_incomplete_shaft': 0,
-                'right_implant': 0
+                'visit': visit,
+                'left_right': lr,
+                'upside_down': upside_down,
+                'incomplete': incomplete,
+                'implant': incomplete,
+                'width': width,
+                'height': height
             }
-            rects = []
-            for field in item['completions'][0]['result']:
-                if field['from_name'] == 'orientation':
-                    entry['flipped'] = 0 if field['value']['choices'][0] == 'default' else 1
-                elif field['from_name'] == 'salience_left':
-                    entry['left_incomplete'] = 1 if 'Incomplete' in field['value']['choices'] else 0
-                    entry['left_incomplete_shaft'] = 1 if 'Shaft Incomplete' in field['value']['choices'] else 0
-                    entry['left_implant'] = 1 if 'Implant' in field['value']['choices'] else 0
-                elif field['from_name'] == 'salience_right':
-                    entry['right_incomplete'] = 1 if 'Incomplete' in field['value']['choices'] else 0
-                    entry['right_incomplete_shaft'] = 1 if 'Shaft Incomplete' in field['value']['choices'] else 0
-                    entry['right_implant'] = 1 if 'Implant' in field['value']['choices'] else 0
-                elif field['from_name'] == 'prox_femur':
-                    rects.append((field['value']['x'], field['value']['y'],
-                                  field['value']['width'], field['value']['height']))
 
-            rects = rects if rects[0][0] < rects[1][0] else [rects[1], rects[0]]
-            entry['left_bbox_x'] = rects[0][0]
-            entry['left_bbox_y'] = rects[0][1]
-            entry['left_bbox_w'] = rects[0][2]
-            entry['left_bbox_h'] = rects[0][3]
-            entry['right_bbox_x'] = rects[1][0]
-            entry['right_bbox_y'] = rects[1][1]
-            entry['right_bbox_w'] = rects[1][2]
-            entry['right_bbox_h'] = rects[1][3]
+            keypoints = item['keypoints'] if not invalid_keypoints else [i for i in range(12)]
+
+            bbox_min_x = min([float(kp['x']) for kp in keypoints]) if not invalid_keypoints else 0.0
+            bbox_max_x = max([float(kp['x']) for kp in keypoints]) if not invalid_keypoints else 100.0
+            bbox_min_y = min([float(kp['y']) for kp in keypoints]) if not invalid_keypoints else 0.0
+            bbox_max_y = max([float(kp['y']) for kp in keypoints]) if not invalid_keypoints else 100.0
+
+            entry['bbox_min_x'] = bbox_min_x
+            entry['bbox_max_x'] = bbox_max_x
+            entry['bbox_min_y'] = bbox_min_y
+            entry['bbox_max_y'] = bbox_max_y
+
+            for index, kp in enumerate(keypoints):
+                entry[f"keypoint_x_{index}"] = float(kp['x']) if not invalid_keypoints else 0.0
+                entry[f"keypoint_y_{index}"] = float(kp['y']) if not invalid_keypoints else 0.0
 
             labels.append(entry)
 

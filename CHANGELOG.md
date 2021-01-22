@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+### Changed
+
+- Adapted `sof-convert-labels` tool to new LabelStudio label format (including key points).
+
 ## 0.0.9
 ### Added
 

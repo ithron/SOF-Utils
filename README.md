@@ -108,8 +108,7 @@ optional arguments:
 ```text
 usage: sof-convert-labels [-h] [-V] [-f FILE] input_label_file
 
-Convert proximal femur bounding box annotations from label-studio to csv
-format
+Convert proximal femur labels from LabelStudio JSON_MIN format to csv format
 
 positional arguments:
   input_label_file      Path to input label json file.

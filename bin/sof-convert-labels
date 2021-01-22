@@ -7,7 +7,7 @@ def main():
     from sof_utils import misc
 
     parser = argparse.ArgumentParser(
-        description='Convert proximal femur bounding box annotations from label-studio to csv format')
+        description='Convert proximal femur labels from LabelStudio JSON_MIN format to csv format')
     parser.add_argument('input_label_file', type=str,
                         help='Path to input label json file.')
     parser.add_argument('-V', '--version', action='store_true',
