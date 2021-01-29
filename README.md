@@ -1,5 +1,7 @@
 # SOF-Utils
 
+[![PyPI version](https://badge.fury.io/py/sof_utils.svg)](https://badge.fury.io/py/sof_utils)
+
 Utility scripts to aid working with the SOF dataset.
 
 ## Command Line Tools
