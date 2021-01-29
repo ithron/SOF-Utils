@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+
+### Added
+
+- `sof-convert-tfds` tool to convert the TFDS dataset to other formats.
+
 ### Changed
 
 - Adapted `sof-convert-labels` tool to new LabelStudio label format (including key points).

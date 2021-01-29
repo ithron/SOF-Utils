@@ -29,7 +29,9 @@ setuptools.setup(
     scripts=[
         'bin/sof-dicom-meta',
         'bin/sof-dicom-corrupted',
-        'bin/sof-export-images'
+        'bin/sof-export-images',
+        'bin/sof-convert-labels',
+        'bin/sof-convert-tfds'
     ],
     install_requires=requirements
 )

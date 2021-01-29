@@ -118,3 +118,34 @@ optional arguments:
   -V, --version         Print the version string
   -f FILE, --file FILE  Write output to file instead to stdout
 ```
+
+### sof-convert-tfds
+```text
+usage: sof-convert-tfds [-h] [--data_dir DATA_DIR] [-V]
+                        [--configuration {keypoint_detection}]
+                        [--format {TFObjectDetection}] [--split SPLIT]
+                        [--num_shards NUM_SHARDS]
+                        output_file
+
+Convert SOF_hip TFDS dataset into another format.
+
+positional arguments:
+  output_file           Path to destination file.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --data_dir DATA_DIR   TFDS data dir.
+  -V, --version         Print the version string
+  --configuration {keypoint_detection}, -c {keypoint_detection}
+                        Dataset configuration to use. Note: not all
+                        configuration are supported by all output format.
+                        Default is 'keypoint_detection'
+  --format {TFObjectDetection}, -f {TFObjectDetection}
+                        Dataset configuration to use. Note: not all
+                        configuration are supported by all output format.
+                        Default is 'TFObjectDetection'
+  --split SPLIT, -s SPLIT
+                        Split to convert. Default to 'train'
+  --num_shards NUM_SHARDS, -n NUM_SHARDS
+                        Number of shards to split the resulting dataset into.
+```
