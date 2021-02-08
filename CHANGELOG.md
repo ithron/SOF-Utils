@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.0.13
 
 ### Added
 - `sof-convert-labels` can now handle multiple input files
