@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `sof-convert-tfds` now included `image/upside_down` labels
+
 ## 0.0.14
 
 ### Fixed

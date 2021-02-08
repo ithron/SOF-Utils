@@ -30,6 +30,7 @@ def convert_example(example):
         'image/sha256': utils.bytes_feature(image_key.encode('utf8')),
         'image/encoded': utils.bytes_feature(encoded_image),
         'image/format': utils.bytes_feature("png".encode('utf8')),
+        'image/upside_down': utils.int64_feature(example['image/upside_down'].numpy()),
         'image/object/class/label': utils.int64_list_feature([example['object/class'].numpy()]),
         'image/object/class/text': utils.bytes_list_feature([class_text.encode('utf8')]),
         'image/object/bbox/ymin': utils.float_list_feature([bbox[0]]),
