@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.0.14
+
+### Fixed
+
+- Fixed: `sof-convert-tfds` ignores class labels.
+
 ## 0.0.13
 
 ### Added
