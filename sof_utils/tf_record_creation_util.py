@@ -29,10 +29,14 @@ def open_sharded_output_tfrecords(exit_stack, base_path, num_shards):
     Returns:
       The list of opened TFRecords. Position k in the list corresponds to shard k.
     """
-    tf_record_output_filenames = [
-        '{}-{:05d}-of-{:05d}'.format(base_path, idx, num_shards)
-        for idx in range(num_shards)
-    ]
+
+    if num_shards > 1:
+        tf_record_output_filenames = [
+            '{}-{:05d}-of-{:05d}'.format(base_path, idx, num_shards)
+            for idx in range(num_shards)
+        ]
+    else:
+        tf_record_output_filenames = [base_path]
 
     tfrecords = [
         exit_stack.enter_context(tf.io.TFRecordWriter(file_name))
