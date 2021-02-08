@@ -108,17 +108,20 @@ optional arguments:
 
 ### sof-convert-labels
 ```text
-usage: sof-convert-labels [-h] [-V] [-f FILE] input_label_file
+usage: sof-convert-labels [-h] [-V] [-f FILE] [-s SKIP_FILE] input_label_file
 
 Convert proximal femur labels from LabelStudio JSON_MIN format to csv format
 
 positional arguments:
-  input_label_file      Path to input label json file.
+  input_label_file      Path to input label json file(s). Multiple files can
+                        be used using glob pattern.
 
 optional arguments:
   -h, --help            show this help message and exit
   -V, --version         Print the version string
   -f FILE, --file FILE  Write output to file instead to stdout
+  -s SKIP_FILE, --skip-file SKIP_FILE
+                        Write skipped file names to the given file.
 ```
 
 ### sof-convert-tfds

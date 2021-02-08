@@ -35,6 +35,8 @@ def read_label_file(filename: str) -> List[Dict]:
 
     open_file = lambda: open(filename, 'r')
 
+    skipped = []
+
     if label_path.suffix == '.zip':
         zip_file = ZipFile(label_path, 'r')
         open_file = zip_file.open('result.json', 'r')
@@ -63,7 +65,10 @@ def read_label_file(filename: str) -> List[Dict]:
             invalid_keypoints = (incomplete + implant) > 0
 
             if not invalid_keypoints and ("keypoints" not in item or len(item['keypoints']) != 12):
-                raise ValueError(f"Not enough keypoints in label for {image_id}V{visit}{lr}")
+                import sys
+                print(f"Annotation for {image_filename} has invalid keypoints. Skipping.", file=sys.stderr)
+                skipped.append(image_filename)
+                continue
 
             entry = {
                 'filename': image_filename,
@@ -95,4 +100,4 @@ def read_label_file(filename: str) -> List[Dict]:
 
             labels.append(entry)
 
-    return labels
+    return labels, skipped
