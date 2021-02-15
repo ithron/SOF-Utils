@@ -34,13 +34,11 @@ jobs:
 #         twine upload dist/*
     - name: Get Version
       id: version
-      run: echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}
+      run: "echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}"
     - name: Get Changelog
       id: changelog
       run: |
         echo "::set-output name=CHANGE_LOG::$(sed -n '/## ${{steps.version.outputs.VERSION}}/,/## [0-9]*\.[0-9]*\.[0-9]*/ p' CHANGELOG.md | sed '$d')"
-    - name: Print Changelog
-      run: echo ${{ steps.changelog.outputs.CHANGE_LOG }}
     - name: Create Release
       uses: actions/create-release@v1
       env:
@@ -49,6 +47,6 @@ jobs:
           tag_name: ${{ steps.version.outputs.VERSION }}
           release_name: Release ${{ steps.version.outputs.VERSION }}
           body: ${{ steps.changelog.outputs.CHANGE_LOG }}
-          draft: false
+          draft: true
           prerelease: false
       
