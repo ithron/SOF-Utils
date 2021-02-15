@@ -7,5 +7,5 @@ CHANGELOG=$(sed -n "/## ${VERSION}/,/## [0-9]*\.[0-9]*\.[0-9]*/ p" CHANGELOG.md 
 CHANGELOG="${CHANGELOG//'%'/'%25'}"
 CHANGELOG="${CHANGELOG//$'\n'/'%0A'}"
 CHANGELOG="${CHANGELOG//$'\r'/'%0D'}"
-echo "::set-output name=changelog::$(echo "$CHANGELOG")"
+echo "$CHANGELOG"
 

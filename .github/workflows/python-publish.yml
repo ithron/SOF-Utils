@@ -35,7 +35,7 @@ jobs:
       run: "echo ::set-output name=VERSION::${GITHUB_REF#refs/tags/}"
     - name: Get Changelog
       id: changelog
-      run: .github/scripts/changelog.sh
+      run: "echo ::set-output name=CHANGE_LOG::$(.github/scripts/changelog.sh)"
     - name: Create Release
       uses: actions/create-release@v1
       env:
