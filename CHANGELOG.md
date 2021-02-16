@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.0.16
+### Added
+  - `sof-detect-keypoints` tool to detect keypoints on the `SOF_hip` dataset.
+
 ## v0.0.15
 
 ### Added

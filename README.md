@@ -154,3 +154,29 @@ optional arguments:
   --num_shards NUM_SHARDS, -n NUM_SHARDS
                         Number of shards to split the resulting dataset into.
 ```
+
+### sof-detect-keypoints
+```text
+usage: sof-detect-keypoints [-h] [-f FILE] [-V] [--data_dir DATA_DIR]
+                            [--configuration {unsupervised_raw,unsupervised_raw_tiny}]
+                            [--preview-dir PREVIEW_DIR]
+                            model_path
+
+Detect keypoints on hip radiographs. Important: the TFDS SOF_hip package must
+be in the python path.
+
+positional arguments:
+  model_path            Path to saved detection model.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -f FILE, --file FILE  Write CSV data to the given file instead of stdout.
+  -V, --version         Print the version string
+  --data_dir DATA_DIR, -d DATA_DIR
+                        Path to the TFDS dataset.
+  --configuration {unsupervised_raw,unsupervised_raw_tiny}, -c {unsupervised_raw,unsupervised_raw_tiny}
+                        Dataset configuration.
+  --preview-dir PREVIEW_DIR, -p PREVIEW_DIR
+                        If given, path to write images with visualizations of
+                        keypoints to.
+```

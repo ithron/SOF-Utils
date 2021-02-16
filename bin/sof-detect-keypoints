@@ -149,7 +149,8 @@ def draw_keypoint(img, kpts, color):
     return img
 
 
-def save_visualization(example, left_label, left_kpts, left_score, right_label, right_kpts, right_score, upside_down, preview_dir):
+def save_visualization(example, left_label, left_kpts, left_score, right_label, right_kpts, right_score, upside_down,
+                       preview_dir):
     import numpy as np
     from pathlib import Path
     out_image = tf.cast(tf.repeat(example['image'], 3, -1), tf.float32) / 255
@@ -238,7 +239,9 @@ def main():
     import sys
     from tqdm import tqdm
 
-    parser = argparse.ArgumentParser(description='Detect keypoints on hip radiographs.')
+    parser = argparse.ArgumentParser(
+        description='Detect keypoints on hip radiographs. Important: the TFDS SOF_hip package must be in the python '
+                    'path.')
     parser.add_argument('model_path', type=str,
                         help='Path to saved detection model.')
     parser.add_argument('-f', '--file', type=str, default=None,
