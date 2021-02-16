@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.0.17
+## v0.0.18
 ### Fixed
 - `sof-detect-keypoints` crashes when writing CSV file
 
