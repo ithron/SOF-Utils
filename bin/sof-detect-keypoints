@@ -50,56 +50,57 @@ def preprocess_image(image):
     left_image = image[:, 0:half_width, ...]
     right_image = tf.image.flip_left_right(image[:, half_width:, ...]).numpy()
 
+    left_image = tf.repeat(left_image, 3, -1)[tf.newaxis, ...]
+    right_image = tf.repeat(right_image, 3, -1)[tf.newaxis, ...]
+
     return left_image, right_image
 
 
 def detect_keypoints(image, detection_fn):
     left_img, right_img = preprocess_image(image)
-    batched_image = rf.repeat(tf.concat([left_img[tf.newaxis, ...], right_img[tf.newaxis, ...]], axis=0), 3, axis=-1)
-    detections = detection_fn(batched_image)
+    left_detections = detection_fn(left_img)
+    right_detections = detection_fn(right_img)
 
-    return detections
-
-
-def rel_x_to_left(rel_x, w):
-    from math import floor
-
-    downscaled_max_x = floor(w / 10)
-    abs_x = rel_x * downscaled_max_x + downscaled_max_x
-    x = 10 * abs_x / w
-    return x
+    return left_detections, right_detections
 
 
 def rel_x_to_right(rel_x, w):
     from math import floor
 
-    downscaled_max_x = floor(w / 10)
-    abs_x = rel_x * downscaled_max_x
-    x = 10 * abs_x / w
+    downscaled_max_x = floor(w / 20)
+    flipped_abs_x = rel_x * downscaled_max_x - 1
+    abs_x = downscaled_max_x - flipped_abs_x
+    abs_x += downscaled_max_x
+    x = 10 * abs_x / (w - 1)
     return x
 
 
-def postproecess_detections(detections, width):
+def rel_x_to_left(rel_x, w):
+    from math import floor
+
+    downscaled_max_x = floor(w / 20)
+    abs_x = rel_x * downscaled_max_x
+    x = 10 * abs_x / (w - 1)
+    return x
+
+
+def postproecess_detections(detections, left_right, width):
     import numpy as np
 
-    best_index = tf.argmax(detections['detection_scores'], -1).numpy()
-    left_score = tf.squeeze(detections['detection_scores'][0, best_index[0]]).numpy()
-    right_score = tf.squeeze(detections['detection_scores'][1, best_index[1]]).numpy()
-    left_label = detections['detection_classes'][0, best_index[0]].numpy()
-    right_label = detections['detection_classes'][1, best_index[1]].numpy()
-    left_keypoints = tf.squeeze(detections['detection_keypoints'][0, best_index[0], ...]).numpy()
-    right_keypoints = tf.squeeze(detections['detection_keypoints'][1, best_index[1], ...]).numpy()
+    score = tf.squeeze(detections['detection_scores']).numpy()
+    label = tf.squeeze(detections['detection_classes']).numpy()
+    keypoints = tf.squeeze(detections['detection_keypoints']).numpy()
 
-    if left_label != 1:
-        left_keypoints = np.zeros_like(left_keypoints)
-    if right_label != 1:
-        right_keypoints = np.zeros_like(right_keypoints)
+    if label != 1:
+        keypoints = np.zeros_like(keypoints)
 
     for i in range(12):
-        left_keypoints[i, 1] = rel_x_to_left(left_keypoints[i, 1], width)
-        right_keypoints[i, 1] = rel_x_to_left(right_keypoints[i, 1], width)
+        if left_right == 'left':
+            keypoints[i, 1] = rel_x_to_left(keypoints[i, 1], width)
+        else:
+            keypoints[i, 1] = rel_x_to_right(keypoints[i, 1], width)
 
-    return left_label, left_keypoints, left_score, right_label, right_keypoints, right_score
+    return label, keypoints, score
 
 
 def label_to_text(label):
@@ -115,12 +116,12 @@ def label_to_text(label):
 
 def is_upside_down(left_label, left_kpts, right_kpts):
     if left_label == 1:
-        return left_kpts[3, 0] - left_kpts[0, 0] < -1e-3
-    return right_kpts[3, 0] - right_kpts[0, 0] < -1e-3
+        return left_kpts[3, 0] - left_kpts[0, 0] >= 0
+    return right_kpts[3, 0] - right_kpts[0, 0] >= 0
 
 
 def flip_img_and_kpts(image, left_label, left_kpts, left_score, right_label, right_kpts, right_score):
-    iamge = tf.image.flip_left_right(tf.image.flip_up_down(image))
+    image = tf.image.flip_left_right(tf.image.flip_up_down(image))
     (left_label, right_label) = (right_label, left_label)
     (left_score, right_score) = (right_score, left_score)
     (left_kpts, right_kpts) = (1 - right_kpts, 1 - left_kpts)
@@ -128,11 +129,68 @@ def flip_img_and_kpts(image, left_label, left_kpts, left_score, right_label, rig
     return image, left_label, left_kpts, left_score, right_label, right_kpts, right_score
 
 
-def process_example(example, detection_fn):
+def put_text(img, text, color, lr, y_offset=0):
+    import cv2
+    import numpy as np
+    x_offset = np.ceil(img.shape[-2] / 8)
+    if lr == 'right':
+        x_offset *= 5
+    result = cv2.putText(img, str(text), (int(x_offset), 200 + y_offset), cv2.FONT_HERSHEY_PLAIN, 10, color, 10)
+    return result
+
+
+def draw_keypoint(img, kpts, color):
+    import cv2
+
+    for i in range(kpts.shape[0]):
+        center = (int(kpts[i][1] * img.shape[1]), int(kpts[i][0] * img.shape[0]))
+        img = cv2.circle(img, center, 15, color, 10)
+
+    return img
+
+
+def save_visualization(example, left_label, left_kpts, left_score, right_label, right_kpts, right_score, preview_dir):
+    import numpy as np
+    from pathlib import Path
+    out_image = tf.cast(tf.repeat(example['image'], 3, -1), tf.float32) / 255
+    if right_label == 1:
+        right_color = (0, 1, 0)
+    elif right_label == 2:
+        right_color = (1, 0, 0)
+    elif right_label == 3:
+        right_color = (0, 0, 1)
+    if left_label == 1:
+        left_color = (0, 1, 0)
+    elif left_label == 2:
+        left_color = (1, 0, 0)
+    elif left_label == 3:
+        left_color = (0, 0, 1)
+
+    out_image = out_image.numpy()
+
+    if left_label == 1:
+        out_image = draw_keypoint(out_image, left_kpts, left_color)
+    if right_label == 1:
+        out_image = draw_keypoint(out_image, right_kpts, right_color)
+
+    out_image = put_text(out_image, label_to_text(right_label), right_color, 'right')
+    out_image = put_text(out_image, str(right_score), right_color, 'right', 150)
+    out_image = put_text(out_image, label_to_text(left_label), left_color, 'left')
+    out_image = put_text(out_image, str(left_score), left_color, 'left', 150)
+
+    out_image = tf.convert_to_tensor(out_image)
+    out_image = tf.cast(out_image * 255, tf.uint8)
+
+    encoded_image = tf.image.encode_png(out_image)
+    filename = f"{example['image/id'].numpy()}V{example['image/visit'].numpy()}-annotated.png"
+    tf.io.write_file(str(Path(preview_dir).joinpath(filename)), encoded_image)
+
+
+def process_example(example, detection_fn, preview_dir=None):
     image = example['image']
-    detections = detect_keypoints(image, detection_fn)
-    left_label, left_kpts, left_score, right_label, right_kpts, right_score = postproecess_detections(detections,
-                                                                                                      image.shape[1])
+    left_detections, right_detections = detect_keypoints(image, detection_fn)
+    left_label, left_kpts, left_score, = postproecess_detections(left_detections, 'left', image.shape[1])
+    right_label, right_kpts, right_score = postproecess_detections(right_detections, 'right', image.shape[1])
 
     if is_upside_down(left_label, left_kpts, right_kpts):
         image, left_label, left_kpts, left_score, right_label, right_kpts, right_score = flip_img_and_kpts(image,
@@ -160,6 +218,10 @@ def process_example(example, detection_fn):
         row[f"right_kp{i}x"] = left_kpts[i, 1]
         row[f"right_kp{i}y"] = left_kpts[i, 0]
 
+    if preview_dir:
+        save_visualization(example, left_label, left_kpts, left_score, right_label, right_kpts, right_score,
+                           preview_dir)
+
     return row
 
 
@@ -169,6 +231,7 @@ def main():
     import tensorflow_datasets as tfds
     from csv import DictWriter
     import sys
+    from tqdm import tqdm
 
     parser = argparse.ArgumentParser(description='Detect keypoints on hip radiographs.')
     parser.add_argument('model_path', type=str,
@@ -179,8 +242,8 @@ def main():
                         help="Print the version string")
     parser.add_argument('--data_dir', '-d', type=str, default=None,
                         help='Path to the TFDS dataset.')
-    parser.add_argument('--configuration', '-c', type=str, default='unsupervised',
-                        choices=['unsupervised', 'unsupervised_tiny'],
+    parser.add_argument('--configuration', '-c', type=str, default='unsupervised_raw',
+                        choices=['unsupervised_raw', 'unsupervised_raw_tiny'],
                         help='Dataset configuration.')
     parser.add_argument('--preview-dir', '-p', type=str,
                         help='If given, path to write images with visualizations of keypoints to.')
@@ -197,9 +260,8 @@ def main():
 
     detection_fn = load_model(args.model_path)
 
-    rows = []
-    for example in ds:
-        rows.append(process_example(example, detection_fn))
+    rows = [process_example(example, detection_fn, args.preview_dir) for
+            example in tqdm(ds, desc="Detecting keypoints ", unit='images')]
 
     op_file = lambda: open(args.file) if args.file else sys.stdout
 
@@ -209,8 +271,6 @@ def main():
         writer = DictWriter(fh, fieldnames=keys)
         writer.writeheader()
         writer.writerows(rows)
-
-    # TODO: Add visualizations
 
 
 if __name__ == '__main__':
