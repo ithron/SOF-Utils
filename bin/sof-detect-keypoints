@@ -269,9 +269,9 @@ def main():
     detection_fn = load_model(args.model_path)
 
     rows = [process_example(example, detection_fn, args.preview_dir) for
-            example in tqdm(ds, desc="Detecting keypoints ", unit='images')]
+            i, example in tqdm(enumerate(ds), desc="Detecting keypoints ", unit=' images') if i < 10]
 
-    op_file = lambda: open(args.file) if args.file else sys.stdout
+    op_file = lambda: open(args.file, "w") if args.file else sys.stdout
 
     keys = rows[0].keys()
 
