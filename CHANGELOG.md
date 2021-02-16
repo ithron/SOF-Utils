@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.0.19
+### Fixed
+- `sof-detect-keypoints` processes only 10 images.
+
 ## v0.0.18
 ### Fixed
 - `sof-detect-keypoints` crashes when writing CSV file

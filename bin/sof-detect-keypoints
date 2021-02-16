@@ -269,7 +269,7 @@ def main():
     detection_fn = load_model(args.model_path)
 
     rows = [process_example(example, detection_fn, args.preview_dir) for
-            i, example in tqdm(enumerate(ds), desc="Detecting keypoints ", unit=' images') if i < 10]
+            example in tqdm(ds, desc="Detecting keypoints ", unit=' images')]
 
     op_file = lambda: open(args.file, "w") if args.file else sys.stdout
 
