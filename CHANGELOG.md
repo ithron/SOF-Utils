@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.0.17
+### Fixed
+- `sof-detect-keypoints` crashes when writing CSV file
+
 ## v0.0.16
 ### Added
   - `sof-detect-keypoints` tool to detect keypoints on the `SOF_hip` dataset.
