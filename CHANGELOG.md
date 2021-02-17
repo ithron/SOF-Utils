@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.0.20
+### Fixed
+- [Issue 14](https://github.com/ithron/SOF-Utils/issues/14): sof-detect-keypoints: wrong upside_down label on rare case with wrong key point locations and low confidence
+
 ## v0.0.19
 ### Fixed
 - `sof-detect-keypoints` processes only 10 images.
