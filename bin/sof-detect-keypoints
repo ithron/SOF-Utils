@@ -114,10 +114,22 @@ def label_to_text(label):
         return "Unknown"
 
 
-def is_upside_down(left_label, left_kpts, right_kpts):
-    if left_label == 1:
-        return left_kpts[3, 0] - left_kpts[0, 0] > 1e-3
-    return right_kpts[3, 0] - right_kpts[0, 0] > 1e-3
+def is_upside_down(left_label, left_kpts, left_score, right_label, right_kpts, right_score):
+    def get_orientation(kpts):
+        return kpts[3, 0] - kpts[0, 0] > 1e-3
+
+    if left_label == 1 and right_label == 1:
+        if left_score > right_score:
+            return get_orientation(left_kpts)
+        else:
+            return get_orientation(right_kpts)
+    elif left_label == 1 and right_label != 1:
+        return get_orientation(left_kpts)
+    elif left_label != 1 and right_label == 1:
+        return get_orientation(right_kpts)
+    else:
+        # Both labels are not "Complete" => We don't have any key points to detect the orientation
+        return False
 
 
 def flip_img_and_kpts(image, left_label, left_kpts, left_score, right_label, right_kpts, right_score):
@@ -196,7 +208,7 @@ def process_example(example, detection_fn, preview_dir=None):
     right_label, right_kpts, right_score = postproecess_detections(right_detections, 'right', image.shape[1])
 
     upside_down = 0
-    if is_upside_down(left_label, left_kpts, right_kpts):
+    if is_upside_down(left_label, left_kpts, left_score, right_label, right_kpts, right_score):
         upside_down = 1
         image, left_label, left_kpts, left_score, right_label, right_kpts, right_score = flip_img_and_kpts(image,
                                                                                                            left_label,
