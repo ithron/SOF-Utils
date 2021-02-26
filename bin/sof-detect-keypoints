@@ -37,9 +37,6 @@ def load_model(model_path):
 
 
 def preprocess_image(image):
-    image = tf.image.resize(image, (tf.math.ceil(image.shape[0] / 10),
-                                    tf.math.ceil(image.shape[1] / 10)),
-                            antialias=True)
     padding = image.shape[1] % 2
     image = tf.image.pad_to_bounding_box(image, 0, 0, image.shape[0], image.shape[1] + padding)
     image = tf.cast(image, tf.uint8).numpy()
@@ -67,20 +64,22 @@ def detect_keypoints(image, detection_fn):
 def rel_x_to_right(rel_x, w):
     from math import floor
 
-    downscaled_max_x = floor(w / 20)
-    flipped_abs_x = rel_x * downscaled_max_x - 1
+    padded = int((w % 2) != 0)
+
+    downscaled_max_x = floor(w / 2)
+    flipped_abs_x = rel_x * downscaled_max_x - padded
     abs_x = downscaled_max_x - flipped_abs_x
     abs_x += downscaled_max_x
-    x = 10 * abs_x / (w - 1)
+    x = abs_x / (w - 1)
     return x
 
 
 def rel_x_to_left(rel_x, w):
     from math import floor
 
-    downscaled_max_x = floor(w / 20)
-    abs_x = rel_x * downscaled_max_x
-    x = 10 * abs_x / (w - 1)
+    max_x = floor(w / 2)
+    abs_x = rel_x * max_x
+    x = abs_x / (w - 1)
     return x
 
 
