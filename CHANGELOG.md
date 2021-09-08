@@ -1,8 +1,15 @@
 # Changelog
 
+## v0.0.21
+### Fixed
+- `sof-detect-keypoints` missing in install script
+- missing _tensorflow-dataset_ requirement
+### Added
+- `sof-detect-keypoints` now also works with png images (not only TFDS datasets)
+
 ## v0.0.20
 ### Fixed
-- [Issue 14](https://github.com/ithron/SOF-Utils/issues/14): sof-detect-keypoints: wrong upside_down label on rare case with wrong key point locations and low confidence
+- [Issue 14](https://github.com/ithron/OF-Utils/issues/14): sof-detect-keypoints: wrong upside_down label on rare case with wrong key point locations and low confidence
 
 ## v0.0.19
 ### Fixed
