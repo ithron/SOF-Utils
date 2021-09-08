@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.0.22
+### Fixed
+- A typo in _requirements.txt_ resulted in failed installation
+
 ## v0.0.21
 ### Fixed
 - `sof-detect-keypoints` missing in install script
