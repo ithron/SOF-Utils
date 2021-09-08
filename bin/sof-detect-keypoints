@@ -37,9 +37,6 @@ def load_model(model_path):
 
 
 def preprocess_image(image):
-    image = tf.image.resize(image, (tf.math.ceil(image.shape[0] / 10),
-                                    tf.math.ceil(image.shape[1] / 10)),
-                            antialias=True)
     padding = image.shape[1] % 2
     image = tf.image.pad_to_bounding_box(image, 0, 0, image.shape[0], image.shape[1] + padding)
     image = tf.cast(image, tf.uint8).numpy()
@@ -67,20 +64,22 @@ def detect_keypoints(image, detection_fn):
 def rel_x_to_right(rel_x, w):
     from math import floor
 
-    downscaled_max_x = floor(w / 20)
-    flipped_abs_x = rel_x * downscaled_max_x - 1
+    padded = int((w % 2) != 0)
+
+    downscaled_max_x = floor(w / 2)
+    flipped_abs_x = rel_x * downscaled_max_x - padded
     abs_x = downscaled_max_x - flipped_abs_x
     abs_x += downscaled_max_x
-    x = 10 * abs_x / (w - 1)
+    x = abs_x / (w - 1)
     return x
 
 
 def rel_x_to_left(rel_x, w):
     from math import floor
 
-    downscaled_max_x = floor(w / 20)
-    abs_x = rel_x * downscaled_max_x
-    x = 10 * abs_x / (w - 1)
+    max_x = floor(w / 2)
+    abs_x = rel_x * max_x
+    x = abs_x / (w - 1)
     return x
 
 
@@ -151,12 +150,15 @@ def put_text(img, text, color, lr, y_offset=0):
     return result
 
 
-def draw_keypoint(img, kpts, color):
+def draw_keypoint(img, kpts, color, small=False):
     import cv2
 
     for i in range(kpts.shape[0]):
         center = (int(kpts[i][1] * img.shape[1]), int(kpts[i][0] * img.shape[0]))
-        img = cv2.circle(img, center, 15, color, 10)
+        if not small:
+            img = cv2.circle(img, center, 15, color, 10)
+        else:
+            img = cv2.circle(img, center, 1, color, 1)
 
     return img
 
@@ -183,26 +185,41 @@ def save_visualization(example, left_label, left_kpts, left_score, right_label, 
         out_image = tf.image.flip_left_right(tf.image.flip_up_down(out_image))
     out_image = out_image.numpy()
 
-    if left_label == 1:
-        out_image = draw_keypoint(out_image, left_kpts, left_color)
-    if right_label == 1:
-        out_image = draw_keypoint(out_image, right_kpts, right_color)
+    small = min(out_image.shape[0], out_image.shape[1]) < 500
 
-    out_image = put_text(out_image, label_to_text(right_label), right_color, 'right')
-    out_image = put_text(out_image, str(right_score), right_color, 'right', 150)
-    out_image = put_text(out_image, label_to_text(left_label), left_color, 'left')
-    out_image = put_text(out_image, str(left_score), left_color, 'left', 150)
+    if left_label == 1:
+        out_image = draw_keypoint(out_image, left_kpts, left_color, small)
+    if right_label == 1:
+        out_image = draw_keypoint(out_image, right_kpts, right_color, small)
+
+    if not small:
+        out_image = put_text(out_image, label_to_text(right_label), right_color, 'right')
+        out_image = put_text(out_image, str(right_score), right_color, 'right', 150)
+        out_image = put_text(out_image, label_to_text(left_label), left_color, 'left')
+        out_image = put_text(out_image, str(left_score), left_color, 'left', 150)
 
     out_image = tf.convert_to_tensor(out_image)
     out_image = tf.cast(out_image * 255, tf.uint8)
 
     encoded_image = tf.image.encode_png(out_image)
-    filename = f"{example['image/id'].numpy()}V{example['image/visit'].numpy()}-annotated.png"
+    if isinstance(example['image/id'], tf.Tensor):
+        filename = f"{example['image/id'].numpy()}V{example['image/visit'].numpy()}-annotated.png"
+    else:
+        filename = f"{example['image/id']}V{example['image/visit']}-annotated.png"
     tf.io.write_file(str(Path(preview_dir).joinpath(filename)), encoded_image)
 
 
-def process_example(example, detection_fn, preview_dir=None):
-    image = example['image']
+def process_example(example, detection_fn, preview_dir=None, filename=None):
+    if not isinstance(example, tf.Tensor):
+        image = example['image']
+    else:
+        image = example
+        example = {
+            'image': image,
+            'image/id': filename,
+            'image/visit': 'NA'
+        }
+
     left_detections, right_detections = detect_keypoints(image, detection_fn)
     left_label, left_kpts, left_score, = postproecess_detections(left_detections, 'left', image.shape[1])
     right_label, right_kpts, right_score = postproecess_detections(right_detections, 'right', image.shape[1])
@@ -219,8 +236,9 @@ def process_example(example, detection_fn, preview_dir=None):
                                                                                                            right_score)
 
     row = {
-        'id': example['image/id'].numpy(),
-        'visit': example['image/visit'].numpy(),
+        'id': example['image/id'].numpy() if isinstance(example['image/id'], tf.Tensor) else example['image/id'],
+        'visit': example['image/visit'].numpy() if isinstance(example['image/visit'], tf.Tensor) else example[
+            'image/visit'],
         'width': image.shape[1],
         'height': image.shape[0],
         'upside_down': upside_down,
@@ -250,6 +268,7 @@ def main():
     from csv import DictWriter
     import sys
     from tqdm import tqdm
+    from pathlib import Path
 
     parser = argparse.ArgumentParser(
         description='Detect keypoints on hip radiographs. Important: the TFDS SOF_hip package must be in the python '
@@ -267,6 +286,8 @@ def main():
                         help='Dataset configuration.')
     parser.add_argument('--preview-dir', '-p', type=str,
                         help='If given, path to write images with visualizations of keypoints to.')
+    parser.add_argument('--from-images', '-i', type=str, default=None,
+                        help='Detect keypoint from png images instead of the SOF_hip TFDS dataset')
 
     args = parser.parse_args()
 
@@ -275,13 +296,24 @@ def main():
         print(sof_utils.__version__)
         exit(0)
 
-    ds_name = f"SOF_hip/{args.configuration}"
-    ds = tfds.load(ds_name, split='train', data_dir=args.data_dir if args.data_dir else None)
-
     detection_fn = load_model(args.model_path)
 
-    rows = [process_example(example, detection_fn, args.preview_dir) for
-            example in tqdm(ds, desc="Detecting keypoints ", unit=' images')]
+    if not args.from_images:
+        ds_name = f"SOF_hip/{args.configuration}"
+        ds = tfds.load(ds_name, split='train', data_dir=args.data_dir if args.data_dir else None)
+
+        rows = [process_example(example, detection_fn, args.preview_dir) for
+                example in tqdm(ds, desc="Detecting keypoints ", unit=' images')]
+    else:
+        image_files = [f for f in Path(args.from_images).glob('*.png')]
+
+        rows = []
+
+        for file in image_files:
+            encoded_img = tf.io.read_file(str(file))
+            img = tf.image.decode_png(encoded_img, 1)
+            row = process_example(img, detection_fn, args.preview_dir, filename=file.stem)
+            rows.append(row)
 
     op_file = lambda: open(args.file, "w") if args.file else sys.stdout
 
