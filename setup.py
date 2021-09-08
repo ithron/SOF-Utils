@@ -31,7 +31,8 @@ setuptools.setup(
         'bin/sof-dicom-corrupted',
         'bin/sof-export-images',
         'bin/sof-convert-labels',
-        'bin/sof-convert-tfds'
+        'bin/sof-convert-tfds',
+        'bin/sof-detect-keypoints'
     ],
     install_requires=requirements
 )
