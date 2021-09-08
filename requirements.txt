@@ -1,4 +1,4 @@
 pydicom
 pathlib
 tqdm
-tensorflow-dataset
+tensorflow-datasets
