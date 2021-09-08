@@ -307,10 +307,13 @@ def main():
     else:
         image_files = [f for f in Path(args.from_images).glob('*.png')]
 
+        rows = []
+
         for file in image_files:
             encoded_img = tf.io.read_file(str(file))
             img = tf.image.decode_png(encoded_img, 1)
-            process_example(img, detection_fn, args.preview_dir)
+            row = process_example(img, detection_fn, args.preview_dir, filename=file.stem)
+            rows.append(row)
 
     op_file = lambda: open(args.file, "w") if args.file else sys.stdout
 
