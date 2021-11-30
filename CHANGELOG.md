@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.0.23
+### Fixed
+- The package `SOF_hip` is no longer required when using png files instead of the TFDS data set.
+- The `sof-detect-keypoints` section in the README.md was outdated.
+
 ## v0.0.22
 ### Fixed
 - A typo in _requirements.txt_ resulted in failed installation
