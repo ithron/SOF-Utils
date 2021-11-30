@@ -263,7 +263,6 @@ def process_example(example, detection_fn, preview_dir=None, filename=None):
 
 def main():
     import argparse
-    import SOF_hip
     import tensorflow_datasets as tfds
     from csv import DictWriter
     import sys
@@ -299,6 +298,7 @@ def main():
     detection_fn = load_model(args.model_path)
 
     if not args.from_images:
+        import SOF_hip
         ds_name = f"SOF_hip/{args.configuration}"
         ds = tfds.load(ds_name, split='train', data_dir=args.data_dir if args.data_dir else None)
 
