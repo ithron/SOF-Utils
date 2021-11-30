@@ -179,6 +179,8 @@ optional arguments:
   --preview-dir PREVIEW_DIR, -p PREVIEW_DIR
                         If given, path to write images with visualizations of
                         keypoints to.
+  --from-images FROM_IMAGES, -i FROM_IMAGES
+                        Detect keypoint from png images instead of the SOF_hip TFDS dataset
 ```
 
 #### Table Description
