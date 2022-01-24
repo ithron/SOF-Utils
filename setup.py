@@ -32,7 +32,8 @@ setuptools.setup(
         'bin/sof-export-images',
         'bin/sof-convert-labels',
         'bin/sof-convert-tfds',
-        'bin/sof-detect-keypoints'
+        'bin/sof-detect-keypoints',
+        'bin/sof-keypoint-outliers'
     ],
     install_requires=requirements
 )
