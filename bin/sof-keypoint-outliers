@@ -29,7 +29,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+import math
 import sys
 from os import PathLike
 from typing import List, Dict, Union, IO, Tuple
@@ -82,25 +82,52 @@ def get_kp_vectors(table: List[Dict]) -> List[Dict]:
 def compute_descriptor(row: Dict) -> Dict:
     """
     Computes a descriptor vector given a row containing a key-point vector.
+    The descriptyor vector is rotational and translational invariant.
     :param row: dictionary that must contain at least a key-point vector ("vector" key) and a side entry ("lr" key).
     :return: `row` with an added "descriptor" entry
     """
     vector = row["vector"]
     positions = vector.reshape((-1, 2))
 
-    # Flip right positions to "simulate" left ones
-    if row["lr"] == "right":
-        positions[:, 0] = 1 - positions[:, 0]
-
     distance_matrix = np.sqrt(np.square(positions[:, 0, np.newaxis] - positions[np.newaxis, :, 0]) + np.square(
         positions[:, 1, np.newaxis] - positions[np.newaxis, :, 1]))
     N = positions.shape[0]
-    distance_vect = []
-    for i in range(N - 1):
-        for j in range(i + 1, N):
-            distance_vect += [np.abs(distance_matrix[i, j])]
 
-    row["descriptor"] = np.concatenate([vector, distance_vect], axis=0)
+    edges = [pair for subpairs in [[(i, j) for j in range(i + 1, N)] for i in range(N - 1)] for pair in subpairs]
+    M = len(edges)
+    distance_vect = [np.abs(distance_matrix[i, j]) for (i, j) in edges]
+
+    edge_pairs = [pair for subpairs in [[(i, j) for j in range(i + 1, M)] for i in range(M - 1)] for pair in subpairs]
+
+    def compute_cosine(edge_0: Tuple[int, int], edge_1: Tuple[int, int]) -> float:
+        """
+        Compute the cosine of the angle between two edges.
+        :param edge_0: First edge, in the form (i, j) where i and j and vertex indices
+        :param edge_1: Second edge, in the form (k, l) where i and j and vertex indices
+        :return: cosine of angle between `edge_0` and `edge_1`. Return `nan` if both edges are not adjacent.
+        """
+        from math import nan
+        e = frozenset(edge_0)
+        f = frozenset(edge_1)
+        # vertex i is shared between edges
+        if e.isdisjoint(f):
+            return nan
+        i = next(iter(e.intersection(f)))
+        # vertices i and j are the end points of the two edes
+        j, k = tuple(e.symmetric_difference(f))
+
+        def normalized(u: np.ndarray) -> np.ndarray:
+            norm = np.linalg.norm(u)
+            return u / norm if norm > 1e-9 else np.zeros_like(u)
+
+        u = normalized(positions[j, ...] - positions[i, ...])
+        v = normalized(positions[k, ...] - positions[i, ...])
+        return u.dot(v)
+
+    cosine_vec = [compute_cosine(edges[i], edges[j]) for (i, j) in edge_pairs]
+    cosine_vec = np.array([v for v in cosine_vec if math.isfinite(v)])
+
+    row["descriptor"] = np.concatenate([distance_vect, cosine_vec], axis=0)
     return row
 
 
@@ -117,21 +144,23 @@ def compute_statistics(rows: List[Dict]) -> Tuple[np.ndarray, np.ndarray]:
     return mean, cov_matrix
 
 
-def find_outliers(table, confidence=0.95):
+def find_outliers(table, confidence=0.95, progress=False):
     """
     Search for outliers in the given key-point table. All data points that are outside the confidence interval are
     considered as outliers.
     :param table: key-point table as returned by `load_table()`
     :param confidence: confidence
     interval use for the outlier search. Defaults to 0.95.
+    :param progress: Display a progress bar while processing
     :return: all entries of `table` that are classified as
     outliers. Note that one row may produce two entries, since the left and the right hips are treated separately.
     """
     from scipy.stats import chi2
+    from tqdm import tqdm
 
     # Compute descriptors
     rows = get_kp_vectors(table)
-    descriptors = [compute_descriptor(row) for row in rows]
+    descriptors = [compute_descriptor(row) for row in (tqdm(rows) if progress else rows)]
     # Compute statistics
     mean, cov = compute_statistics(descriptors)
 
@@ -161,6 +190,7 @@ def main():
                         help="Print the version string")
     parser.add_argument('-i', '--interval', type=float, default=0.95,
                         help='Confidence interval all inliers should lie in, default to 095.')
+    parser.add_argument('-p', '--progress', action='store_true', help="Show progress")
     parser.add_argument('-f', '--file', type=str, default='-', help='Write output to file instead of stdout')
 
     args = parser.parse_args()
@@ -171,12 +201,12 @@ def main():
         exit(0)
 
     table = load_table(args.csv_file)
-    outliers = find_outliers(table, args.interval)
+    outliers = find_outliers(table, args.interval, args.progress)
 
     def open_out() -> IO:
         """ Returns a stream to the output file (stdout in case of "-")
         """
-        return sys.stdout if args.file == "-" else open(args.file)
+        return sys.stdout if args.file == "-" else open(args.file, "w")
 
     with open_out() as f:
         f.write("id,side\n")
