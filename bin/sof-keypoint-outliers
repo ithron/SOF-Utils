@@ -154,7 +154,9 @@ def main():
         description='Detect outliers in the detected key-points. Prints out the patient id and the side of any '
                     'outliers, therefore, e.g. the key points of the right hip might be detected as outliers while '
                     'the key points of the left hip of the same patient might not.')
-    parser.add_argument('csv_file', type=str, help='Path to .csv file containing the key point information')
+    parser.add_argument('csv_file', type=str,
+                        help='Path to .csv file containing the key point information. Use "-" to read from stdin '
+                             'instead.')
     parser.add_argument('-V', '--version', action='store_true',
                         help="Print the version string")
     parser.add_argument('-i', '--interval', type=float, default=0.95,
