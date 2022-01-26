@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.0
+### Added
+
+- `sof-keypoint-outlier` tool to detect outlier in the result of `sof-detect-keypoints`.
+
 ## v0.0.23
 ### Fixed
 - The package `SOF_hip` is no longer required when using png files instead of the TFDS data set.

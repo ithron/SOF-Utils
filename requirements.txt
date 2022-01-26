@@ -2,3 +2,4 @@ pydicom
 pathlib
 tqdm
 tensorflow-datasets
+numpy
