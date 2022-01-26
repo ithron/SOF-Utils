@@ -55,7 +55,7 @@ def load_table(file_path: Union[PathLike, str]) -> List[Dict]:
         return lines
 
 
-def get_kp_vectors(table: List[Dict]) -> List[Dict]:
+def get_kp_vectors(table: List[Dict], ignore_kps: List[int] = []) -> List[Dict]:
     """
     Coalesce all key-points from a row into one key-point vector.
     :param table: key-point table (as returned by
@@ -63,8 +63,10 @@ def get_kp_vectors(table: List[Dict]) -> List[Dict]:
     :return: List of dictionary with keys: "id" (patient id), "lr" (hip side: [left, right]),
     "class" (classification class), "vector": key-point vector.
     """
-    left_keys = [key for keys in [(f"left_kp{i}x", f"left_kp{i}y") for i in range(12)] for key in keys]
-    right_keys = [key for keys in [(f"right_kp{i}x", f"right_kp{i}y") for i in range(12)] for key in keys]
+    left_keys = [key for keys in [(f"left_kp{i}x", f"left_kp{i}y") for i in range(12) if i not in ignore_kps] for key in
+                 keys]
+    right_keys = [key for keys in [(f"right_kp{i}x", f"right_kp{i}y") for i in range(12) if i not in ignore_kps] for key
+                  in keys]
 
     kp_vectors = [[
         {"id": row["id"], "lr": "left", "class": row["left_class"],
@@ -144,7 +146,7 @@ def compute_statistics(rows: List[Dict]) -> Tuple[np.ndarray, np.ndarray]:
     return mean, cov_matrix
 
 
-def find_outliers(table, confidence=0.95, progress=False):
+def find_outliers(table, confidence=0.95, progress=False, ignore: List[int] = []):
     """
     Search for outliers in the given key-point table. All data points that are outside the confidence interval are
     considered as outliers.
@@ -152,6 +154,7 @@ def find_outliers(table, confidence=0.95, progress=False):
     :param confidence: confidence
     interval use for the outlier search. Defaults to 0.95.
     :param progress: Display a progress bar while processing
+    :param ignore: List of key point indices to ignore.
     :return: all entries of `table` that are classified as
     outliers. Note that one row may produce two entries, since the left and the right hips are treated separately.
     """
@@ -159,7 +162,7 @@ def find_outliers(table, confidence=0.95, progress=False):
     from tqdm import tqdm
 
     # Compute descriptors
-    rows = get_kp_vectors(table)
+    rows = get_kp_vectors(table, ignore_kps=ignore)
     descriptors = [compute_descriptor(row) for row in (tqdm(rows) if progress else rows)]
     # Compute statistics
     mean, cov = compute_statistics(descriptors)
@@ -173,7 +176,9 @@ def find_outliers(table, confidence=0.95, progress=False):
     # Compute the radius of the confidence sphere
     radius_sq = chi2.ppf(confidence, data.shape[1])
 
-    return [x for (x, d) in zip(rows, distance_sq) if d > radius_sq]
+    sorted_rows_and_dist = sorted(zip(rows, distance_sq), key=lambda x: x[1], reverse=True)
+
+    return [x for (x, d) in sorted_rows_and_dist if d > radius_sq]
 
 
 def main():
@@ -192,8 +197,13 @@ def main():
                         help='Confidence interval all inliers should lie in, default to 095.')
     parser.add_argument('-p', '--progress', action='store_true', help="Show progress")
     parser.add_argument('-f', '--file', type=str, default='-', help='Write output to file instead of stdout')
+    parser.add_argument('-k', '--ignore-key-points', type=str, default="",
+                        help='Comma separated list of key-point indices to ignore.')
 
     args = parser.parse_args()
+
+    if args.ignore_key_points:
+        args.ignore_key_points = [int(arg) for arg in args.ignore_key_points.split(',')]
 
     if args.version:
         import sof_utils
@@ -201,7 +211,7 @@ def main():
         exit(0)
 
     table = load_table(args.csv_file)
-    outliers = find_outliers(table, args.interval, args.progress)
+    outliers = find_outliers(table, args.interval, args.progress, ignore=args.ignore_key_points)
 
     def open_out() -> IO:
         """ Returns a stream to the output file (stdout in case of "-")
