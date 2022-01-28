@@ -1,6 +1,10 @@
 # Changelog
 
-## V0.1.2
+## v0.1.3
+### Fixed
+- fixed compatibility of `sof-export-images` with SOF_hip v1.0.6
+
+## v0.1.2
 ### Improved
 - `sof-convert-labels` now accepts a wider range of filename patterns
 

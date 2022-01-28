@@ -95,15 +95,19 @@ def export_images(dataset: tf.data.Dataset,
         if not zip:
             with open(str(filename), 'wb') as f:
                 f.write(bytes)
-        if not groups:
+        elif not groups:
             zip_file.writestr(filename.name, bytes)
         else:
             zf = zip_files[group]
             zf.writestr(filename.name, bytes)
 
     for example in tqdm(dataset):
-        sof_id = example['id'].numpy()
-        visit = example['visit'].numpy()
+        if "id" in example:
+            sof_id = example['id'].numpy()
+            visit = example['visit'].numpy()
+        else:
+            sof_id = example['image/id'].numpy()
+            visit = example['image/visit'].numpy()
         if visits and visit not in visits:
             continue
         if included_ids and sof_id not in included_ids or sof_id in excluded_ids:
