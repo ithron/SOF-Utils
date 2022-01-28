@@ -1,5 +1,9 @@
 # Changelog
 
+## V0.1.2
+### Improved
+- `sof-convert-labels` now accepts a wider range of filename patterns
+
 ## v0.1.1
 ### Fixed
 - Missing requirement: scipy

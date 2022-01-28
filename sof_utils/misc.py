@@ -41,9 +41,9 @@ def read_label_file(filename: str) -> List[Dict]:
         zip_file = ZipFile(label_path, 'r')
         open_file = zip_file.open('result.json', 'r')
 
-    with open_file as fh:
+    with open_file() as fh:
         for item in json.load(fh):
-            matches = re.match('^.*[/-]([0-9]+)V([0-9])+(L|R)-([0-9]+)x([0-9]+)\.png$', item['image']).groups()
+            matches = re.match('^.*[/-]?([a-zA-B]*[0-9]+)V([0-9])+(L|R)-([0-9]+)x([0-9]+)\.png$', item['image']).groups()
             image_filename = re.match('^(.*/)?([^/]+\.png)$', item['image']).groups()[-1]
             if not matches or len(matches) != 5:
                 raise ValueError(f"Annotated image '{item['image']}' has wrong format!")
