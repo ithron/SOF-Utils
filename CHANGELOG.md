@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.0
+### Added
+- One can now specify the data set split in `sof-export-images`.
+
 ## v0.1.3
 ### Fixed
 - fixed compatibility of `sof-export-images` with SOF_hip v1.0.6

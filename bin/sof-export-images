@@ -68,6 +68,7 @@ def main():
                         help='Write exported images to a zip file instead of into a directory. If grouping is '
                              'enabled, one zip file per group will be created. Without grouping \'target_path\' '
                              'should be a path a the target zip file not to an directoty.')
+    parser.add_argument('--split', type=str, default='train', help='Specify the data set split, default to "train".')
 
     args = parser.parse_args()
 
@@ -89,7 +90,7 @@ def main():
     visits = [int(visit) for visit in args.visits.split(',') if visit] if args.visits else []
 
     ds_name = 'SOF_hip' if not args.configuration else f"SOF_hip/{args.configuration}"
-    ds = tfds.load(ds_name, split='train', data_dir=args.data_dir if args.data_dir else None)
+    ds = tfds.load(ds_name, split=args.split, data_dir=args.data_dir if args.data_dir else None)
 
     target_size = (args.height, args.width)
 
