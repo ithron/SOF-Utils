@@ -4,3 +4,4 @@ tqdm
 tensorflow-datasets
 numpy
 scipy
+contextlib2

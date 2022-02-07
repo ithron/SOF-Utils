@@ -1,5 +1,9 @@
 # Changelog
 
+## Upcoming release
+# Fixed
+- Added missing requirement 'contextlib2'
+
 ## v0.2.0
 ### Added
 - One can now specify the data set split in `sof-export-images`.
